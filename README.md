@@ -1,6 +1,6 @@
 # Delivery Plus — Restaurant App
 
-The restaurant-owner client of **Delivery Plus**, a food-delivery platform. Owners see their kitchen's orders and move each paid order from *new* to *preparing* to *ready for pickup*; the backend then dispatches a driver automatically.
+The restaurant-owner client of **Delivery Plus**, a food-delivery platform. Owners see their kitchen's orders and move each paid order from *new* to *preparing* to *ready for pickup* (the backend then dispatches a driver automatically), and control whether the restaurant takes orders and which items are sold out.
 
 Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first (desktop and narrow browser widths), on the same foundation and design system as the [customer app](https://github.com/Yousefa7medmaher/delivery-plus-customer-app) and the [driver app](https://github.com/Yousefa7medmaher/delivery-plus-driver-app): API client, session handling, `useResource` cache and polling, UI kit and theme, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) (issue #100).
 
@@ -12,8 +12,10 @@ Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first
 | Restaurants | The owner's restaurants; opens the first one taking orders, with a picker when there are several | `GET /api/restaurants/me` (#59, scoped to the token) |
 | Order board | Lanes *New orders* (CONFIRMED), *In the kitchen* (PREPARING), *Ready for pickup*; items, totals and age per order; other orders on request; polled every 10 s, pull to refresh | `GET /api/orders/restaurant/:restaurantId` (owner role + ownership) |
 | Kitchen actions | One button per order: *Start preparing* → *Ready for pickup*. Ready triggers automatic dispatch; there is no dispatch screen | `PATCH /api/orders/:id/status` (`PREPARING`, `READY_FOR_PICKUP`) |
+| Restaurant status (Menu tab) | *Open / Busy / Closed*; locked while an admin has the restaurant SUSPENDED | `PATCH /api/restaurants/:id/status` |
+| Item availability (Menu tab) | The menu by category; each item *Available / Sold out* with one toggle | `GET /api/menus/restaurants/:id/menu`, `PATCH /api/menus/menu-items/:id/availability` |
 
-Payment owns `CONFIRMED`; the app never offers payment, cancellation or driver assignment. Not yet built: item availability and restaurant open/closed controls, order pagination beyond the newest 50.
+Payment owns `CONFIRMED`; the app never offers payment, cancellation or driver assignment. Not yet built: menu editing (prices, new items, images), opening hours, order pagination beyond the newest 50. Backend gap: owners can still set or lift `SUSPENDED` through the API (delivery-plus #125); the app doesn't offer it.
 
 ## Getting started
 
@@ -31,12 +33,12 @@ Demo owner (after `npm run seed` in the backend): see the backend seed output. O
 
 ```text
 src/
-├── app/            Expo Router screens: (auth)/login, (app)/home (order board); (app)/_layout guards the owner role
-├── components/     UI kit shared with the customer and driver apps (screen, cards, badges, buttons, inputs, alerts, state views) + restaurant-order-card
-├── services/       API client (api.ts), session, auth, restaurants (owner's restaurants), restaurant-orders (list, status)
-├── state/          restaurant.ts: useMyRestaurants, useRestaurantOrders (polling) and advanceOrder; resource-cache
+├── app/            Expo Router screens: (auth)/login, (app)/(tabs)/home (Orders board) and menu (status + availability); (app)/_layout guards the owner role
+├── components/     UI kit shared with the customer and driver apps (screen, cards, badges, buttons, inputs, alerts, state views) + restaurant-order-card, restaurant-picker
+├── services/       API client (api.ts), session, auth, restaurants (owner's restaurants), restaurant-orders (list, status), menus (menu, availability)
+├── state/          restaurant.ts: shared restaurant selection, useRestaurantOrders (polling), useRestaurantMenu, advanceOrder, setItemAvailability, setRestaurantStatus; resource-cache
 ├── hooks/          useResource (cache, polling, in-flight dedupe), theme hooks
-├── utils/          order-status (labels, lanes, next kitchen step, restaurant selection), formatting, login errors (unit-tested)
+├── utils/          order-status (labels, lanes, next kitchen step, restaurant selection), availability (owner statuses, menu grouping), formatting, login errors (unit-tested)
 └── test/           Test setup
 ```
 

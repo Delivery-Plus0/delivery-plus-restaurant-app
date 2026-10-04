@@ -39,7 +39,7 @@ const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '1280x1800';
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
-  smoke: ['smoke/01-restaurant-orders.yaml'],
+  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml'],
   business: ['business/01-kitchen-lifecycle.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
@@ -132,6 +132,26 @@ async function cancelStrayKitchenOrders() {
   if (stray.length) console.log(`[fixture] cancelled ${stray.length} leftover kitchen order(s)`);
 }
 
+/** seed:e2e's availability: QA Kitchen OPEN, QA Soup sold out, every other item available. */
+const SEEDED_SOLD_OUT = new Set(['QA Soup']);
+
+/**
+ * Fixture (after the suite): put QA Kitchen and its menu back as the seed left them, so a failed
+ * availability flow can't leave the customer and driver suites with a closed restaurant or a
+ * sold-out item.
+ */
+async function restoreSeedAvailability() {
+  const owner = await login(manifest.accounts.restaurant.email);
+  const kitchen = manifest.restaurants['QA Kitchen'];
+  const restaurant = await api('GET', `/api/restaurants/${kitchen}`);
+  if (restaurant.status !== 'OPEN') await api('PATCH', `/api/restaurants/${kitchen}/status`, owner, { status: 'OPEN' });
+  const menu = await api('GET', `/api/menus/restaurants/${kitchen}/menu`);
+  for (const item of menu.items) {
+    const available = !SEEDED_SOLD_OUT.has(item.name);
+    if (item.available !== available) await api('PATCH', `/api/menus/menu-items/${item.id}/availability`, owner, { available });
+  }
+}
+
 function container(service) {
   return `${PROJECT}-${service}-1`;
 }
@@ -165,6 +185,16 @@ const actions = {
     await finishCurrentDelivery(driver);
     await api('POST', '/api/drivers/me/offline', driver, {});
     state.awaitingDriver = true;
+  },
+  // Verifications (read-only, public reads a customer would see): the owner's changes reached the server.
+  'verify/fries-sold-out': async () => {
+    const menu = await api('GET', `/api/menus/restaurants/${manifest.restaurants['QA Kitchen']}/menu`);
+    const fries = menu.items.find((item) => item.id === manifest.menuItems['QA Fries']);
+    if (fries?.available !== false) throw new Error(`QA Fries is ${fries?.available ? 'available' : 'missing'} on the public menu, expected sold out`);
+  },
+  'verify/kitchen-busy': async () => {
+    const restaurant = await api('GET', `/api/restaurants/${manifest.restaurants['QA Kitchen']}`);
+    if (restaurant.status !== 'BUSY') throw new Error(`QA Kitchen is ${restaurant.status}, expected BUSY`);
   },
   // Verification (as the customer): the order the kitchen marked ready is READY_FOR_PICKUP and
   // automatic dispatch created its delivery. Nothing here creates or assigns a delivery.
@@ -219,6 +249,7 @@ function runFlow(flow) {
     EMAIL: manifest.accounts.restaurant.email,
     PASSWORD: manifest.password,
     RESTAURANT_ID: manifest.restaurants['QA Kitchen'],
+    FRIES_ID: manifest.menuItems['QA Fries'],
   };
   const maestroArgs = [
     'test',
@@ -270,6 +301,7 @@ async function main() {
   } finally {
     await restoreSeedDriverState().catch((error) => console.error('[cleanup] restoring the QA driver failed:', error.message));
     await cancelStrayKitchenOrders().catch((error) => console.error('[cleanup] cancelling leftover orders failed:', error.message));
+    await restoreSeedAvailability().catch((error) => console.error('[cleanup] restoring menu/restaurant availability failed:', error.message));
     web.kill();
     control.close();
   }

@@ -12,7 +12,8 @@ Replace the restaurant API stand-in with an owner-facing browser client. The MVP
 - [x] Unit tests, CI/security workflows, and Maestro web E2E setup.
 - [x] Same architecture and design system as the customer and driver apps: `(auth)`/`(app)` route groups with an owner-role guard, shared UI kit (`Screen`/`ScreenHeader`, `Card`, `Badge`, `StateView`/`ErrorState`, `SkeletonList`), `useResource` cache + polling, `formatMoney`/`confirm`.
 - [x] Maestro smoke + business suites pass against the real isolated backend (runtime-created orders; web :8085, control :8092).
-- [ ] Replace the restaurant API actions in the customer business E2E with this client.
+- [x] Menu tab: restaurant status (Open/Busy/Closed; locked while SUSPENDED) and item availability (sold out / available), with unit tests and a Maestro smoke flow.
+- [x] The customer business E2E uses this app instead of the restaurant API stand-in (customer-app #20).
 
 ## Backend contract
 
@@ -28,6 +29,7 @@ The owner-scoped order-list response includes the order-item snapshots, so the d
 | Web export | Pass (part of the Maestro `--build`) |
 | Fresh isolated stack: backend `dev` + #124 (CORS :8085), `docker compose … down -v && up --build`, `seed:e2e` | Healthy, seeded |
 | `node e2e/scripts/run.mjs --suite all --build --headless` | **2/2 passed**: smoke (owner sees a new paid order with total and action) and business (start preparing → ready for pickup → automatic dispatch created the delivery) |
+| Menu tab (2026-10-04): typecheck, lint, `npm test`; `run.mjs --suite all --build --headless` on the same stack | Pass; **39** unit tests (new: owner statuses, menu grouping, menu/status API calls). **3/3 flows passed**: orders smoke, availability smoke (QA Fries sold out and back; QA Kitchen Busy and Open, both checked on the public reads), business. Afterwards QA Kitchen OPEN, only QA Soup sold out, QA driver AVAILABLE with no delivery |
 
 The first runs failed and found real problems, all fixed: `_shared/login.yaml` indentation (`Unknown Property: id`); the board opened the owner's first restaurant even when it was closed (now the first OPEN/BUSY one); orders left behind by earlier runs pushed the new order below the fold (fixture now cancels leftover non-seeded kitchen orders before and after the suite).
 
@@ -50,6 +52,6 @@ Affected package-node counts are high: `@expo/cli`, `@expo/code-signing-certific
 
 ## Next
 
-1. Merge this PR (#6) with all checks green.
-2. Phase 5: the customer app's cross-app business flow drives this app instead of the `restaurant/prepare|ready` API stand-in (customer + restaurant + driver UIs in one run).
-3. Item availability and restaurant open/closed controls as a separately scoped follow-up.
+1. Menu editing (prices, new items, images via the existing S3 upload flow) and opening hours, as separately scoped follow-ups.
+2. Push or SSE for new orders instead of the 10 s poll (Phase 6/7, with the backend).
+3. Backend #125: owners must not be able to set or lift `SUSPENDED` through the API.

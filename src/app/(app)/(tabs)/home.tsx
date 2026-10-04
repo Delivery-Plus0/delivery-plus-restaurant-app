@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { RestaurantOrderCard } from '@/components/restaurant-order-card';
+import { RestaurantPicker } from '@/components/restaurant-picker';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge } from '@/components/ui/badge';
@@ -11,14 +12,14 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { ErrorState, StateView } from '@/components/ui/state-view';
-import { BrandColors, IconSize, Layout, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
 import type { KitchenStatus, RestaurantOrder } from '@/services/restaurant-orders';
 import type { Restaurant } from '@/services/restaurants';
 import { clearSession, useAuthSession } from '@/services/session';
-import { advanceOrder, ORDERS_POLL_MS, useMyRestaurants, useRestaurantOrders } from '@/state/restaurant';
+import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant } from '@/state/restaurant';
 import { confirm } from '@/utils/confirm';
-import { groupOrdersByLane, KITCHEN_LANES, RESTAURANT_STATUS_META, selectRestaurant } from '@/utils/order-status';
+import { groupOrdersByLane, KITCHEN_LANES, RESTAURANT_STATUS_META } from '@/utils/order-status';
 
 /** Three lanes side by side from here; two below it; one on phones. */
 const WIDE = 1024;
@@ -29,9 +30,7 @@ const MAX_BOARD_WIDTH = 1440;
 export default function HomeScreen() {
   const { session } = useAuthSession();
   const { width } = useWindowDimensions();
-  const restaurants = useMyRestaurants();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const restaurant = selectRestaurant(restaurants.data, selectedId);
+  const { restaurants, restaurant } = useSelectedRestaurant();
   const orders = useRestaurantOrders(restaurant?.id ?? null);
   const [showOther, setShowOther] = useState(false);
 
@@ -70,9 +69,7 @@ export default function HomeScreen() {
           />
         ) : (
           <>
-            {restaurants.data && restaurants.data.length > 1 ? (
-              <RestaurantPicker restaurants={restaurants.data} selectedId={restaurant.id} onSelect={setSelectedId} />
-            ) : null}
+            <RestaurantPicker restaurants={restaurants.data ?? []} selectedId={restaurant.id} onSelect={selectRestaurantId} />
 
             <RestaurantCard
               restaurant={restaurant}
@@ -152,30 +149,6 @@ export default function HomeScreen() {
         )}
       </ScrollView>
     </Screen>
-  );
-}
-
-function RestaurantPicker({ restaurants, selectedId, onSelect }: { restaurants: Restaurant[]; selectedId: string; onSelect: (id: string) => void }) {
-  return (
-    <View style={styles.picker} accessibilityLabel="Choose restaurant">
-      {restaurants.map((r) => {
-        const selected = r.id === selectedId;
-        return (
-          <Pressable
-            key={r.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            onPress={() => onSelect(r.id)}
-            style={[styles.chip, selected && styles.chipSelected]}
-            testID={`restaurant-select-${r.id}`}
-            nativeID={`restaurant-select-${r.id}`}>
-            <ThemedText type="smallBold" style={{ color: selected ? BrandColors.primaryText : BrandColors.textSecondary }}>
-              {r.name}
-            </ThemedText>
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }
 
@@ -268,24 +241,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  picker: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    minHeight: Layout.buttonHeightSm,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: BrandColors.border,
-    backgroundColor: BrandColors.surface,
-  },
-  chipSelected: {
-    borderColor: BrandColors.primary,
-    backgroundColor: BrandColors.primarySoft,
   },
   restaurantIcon: {
     width: 40,
