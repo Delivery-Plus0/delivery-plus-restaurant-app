@@ -1,0 +1,60 @@
+url: ${APP_URL}
+name: Restaurant owner marks an item sold out and pauses the restaurant, then reverts both
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- tapOn:
+    id: tab-menu
+- extendedWaitUntil:
+    visible:
+      id: restaurant-availability
+    timeout: 20000
+- assertVisible:
+    id: restaurant-status
+    text: Open
+
+# Item availability: QA Fries → sold out (checked on the server), then back.
+- extendedWaitUntil:
+    visible:
+      id: item-${FRIES_ID}-availability
+      text: Available
+    timeout: 15000
+- tapOn:
+    id: item-${FRIES_ID}-toggle
+- extendedWaitUntil:
+    visible:
+      id: item-${FRIES_ID}-availability
+      text: Sold out
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: verify/fries-sold-out
+- tapOn:
+    id: item-${FRIES_ID}-toggle
+- extendedWaitUntil:
+    visible:
+      id: item-${FRIES_ID}-availability
+      text: Available
+    timeout: 15000
+
+# Restaurant status: Busy (checked on the server), then Open again.
+- tapOn:
+    id: restaurant-status-BUSY
+- extendedWaitUntil:
+    visible:
+      id: restaurant-status
+      text: Busy
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: verify/kitchen-busy
+- tapOn:
+    id: restaurant-status-OPEN
+- extendedWaitUntil:
+    visible:
+      id: restaurant-status
+      text: Open
+    timeout: 15000

@@ -24,7 +24,7 @@ export default function AppLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BrandColors.background } }}>
-      <Stack.Screen name="home" />
+      <Stack.Screen name="(tabs)" />
     </Stack>
   );
 }

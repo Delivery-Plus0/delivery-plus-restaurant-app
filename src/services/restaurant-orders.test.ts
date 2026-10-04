@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiGet, apiPatch } from './api';
 import { fetchRestaurantOrders, updateRestaurantOrderStatus } from './restaurant-orders';
-import { fetchMyRestaurants } from './restaurants';
+import { fetchMenu, setMenuItemAvailability } from './menus';
+import { fetchMyRestaurants, updateRestaurantStatus } from './restaurants';
 
 vi.mock('./api', () => ({
   apiGet: vi.fn(),
@@ -33,5 +34,29 @@ describe('restaurant owner API mappings', () => {
     await updateRestaurantOrderStatus('order-1', 'PREPARING');
 
     expect(apiPatch).toHaveBeenCalledWith('/api/orders/order-1/status', { status: 'PREPARING' }, true);
+  });
+
+  it('reads the restaurant menu through the menus prefix (public, no token required)', async () => {
+    vi.mocked(apiGet).mockResolvedValue({ restaurantId: 'r1', categories: [], items: [] });
+
+    await fetchMenu('r/1');
+
+    expect(apiGet).toHaveBeenCalledWith('/api/menus/restaurants/r%2F1/menu');
+  });
+
+  it('marks a menu item sold out or available as the owner', async () => {
+    vi.mocked(apiPatch).mockResolvedValue({ id: 'item-1', available: false });
+
+    await setMenuItemAvailability('item-1', false);
+
+    expect(apiPatch).toHaveBeenCalledWith('/api/menus/menu-items/item-1/availability', { available: false }, true);
+  });
+
+  it('changes the restaurant status as the owner', async () => {
+    vi.mocked(apiPatch).mockResolvedValue({ id: 'r1', status: 'BUSY' });
+
+    await updateRestaurantStatus('r1', 'BUSY');
+
+    expect(apiPatch).toHaveBeenCalledWith('/api/restaurants/r1/status', { status: 'BUSY' }, true);
   });
 });
