@@ -1,141 +1,287 @@
 #!/usr/bin/env node
+// Runs the restaurant app's Maestro suites against the isolated E2E backend (delivery-plus:
+// `npm run e2e:env:reset`). Same runner design as the customer and driver apps; see e2e/README.md.
+//
+//   node e2e/scripts/run.mjs --suite smoke|business|all [--build] [--headless]
+//
+// Env: E2E_API_URL (http://localhost:3100), E2E_WEB_PORT (8085), E2E_CONTROL_PORT (8092),
+//      E2E_MANIFEST (../delivery-plus/e2e-seed-manifest.json), MAESTRO_BIN (maestro),
+//      E2E_COMPOSE_PROJECT (delivery-plus-e2e)
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const E2E_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const APP_DIR = resolve(E2E_DIR, '..');
 const args = process.argv.slice(2);
+const flag = (name) => args.includes(`--${name}`);
 const option = (name, fallback) => {
-  const index = args.indexOf(`--${name}`);
-  return index >= 0 ? args[index + 1] : fallback;
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : fallback;
 };
-const hasFlag = (name) => args.includes(`--${name}`);
+
 const suite = option('suite', 'smoke');
-const apiUrl = process.env.E2E_API_URL ?? 'http://localhost:3100';
-const webPort = Number(process.env.E2E_WEB_PORT ?? 8083);
-const appUrl = `http://localhost:${webPort}`;
-const manifestPath = resolve(process.env.E2E_MANIFEST ?? join(APP_DIR, '..', 'delivery-plus', 'e2e-seed-manifest.json'));
-const buildDir = join(E2E_DIR, '.web-build');
-const artifactsDir = join(E2E_DIR, '.artifacts', suite);
-const maestro = process.env.MAESTRO_BIN ?? 'maestro';
-const screenSize = process.env.E2E_SCREEN_SIZE ?? '1440x1100';
-const suites = {
+const API_URL = process.env.E2E_API_URL ?? 'http://localhost:3100';
+// Different default ports from the customer (8083/8090) and driver (8084/8091) runners, so all three
+// suites can run on one machine. The gateway allows 8085 in development (delivery-plus #124).
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 8085);
+const CONTROL_PORT = Number(process.env.E2E_CONTROL_PORT ?? 8092);
+const APP_URL = `http://localhost:${WEB_PORT}`;
+const CONTROL_URL = `http://localhost:${CONTROL_PORT}`;
+const MANIFEST = resolve(process.env.E2E_MANIFEST ?? join(APP_DIR, '..', 'delivery-plus', 'e2e-seed-manifest.json'));
+const MAESTRO = process.env.MAESTRO_BIN ?? 'maestro';
+const PROJECT = process.env.E2E_COMPOSE_PROJECT ?? 'delivery-plus-e2e';
+const WEB_BUILD = join(E2E_DIR, '.web-build');
+// Desktop width: the order board is the restaurant's main (web) surface; lanes sit side by side.
+const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '1280x1800';
+const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
+
+const SUITES = {
   smoke: ['smoke/01-restaurant-orders.yaml'],
   business: ['business/01-kitchen-lifecycle.yaml'],
 };
-suites.all = [...suites.smoke, ...suites.business];
+SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
-if (!suites[suite]) {
-  console.error(`Unknown suite "${suite}". Use one of: ${Object.keys(suites).join(', ')}`);
+if (!SUITES[suite]) {
+  console.error(`Unknown suite "${suite}". Use one of: ${Object.keys(SUITES).join(', ')}`);
   process.exit(2);
 }
-if (!existsSync(manifestPath)) {
-  console.error(`No seed manifest at ${manifestPath}. Run npm run seed:e2e in delivery-plus first.`);
+if (!existsSync(MANIFEST)) {
+  console.error(`No seed manifest at ${MANIFEST}. Run \`npm run e2e:env:reset\` in delivery-plus first.`);
   process.exit(2);
 }
+const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 
-const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+// ---------------------------------------------------------------------------------------------
+// Gateway client used by the control server (customer stand-in, driver fixture, verifications).
+// ---------------------------------------------------------------------------------------------
 
-function resetRateLimits() {
-  execFileSync('docker', [
-    'exec', 'delivery-plus-e2e-redis-1', 'redis-cli', 'EVAL',
-    "for _,k in ipairs(redis.call('KEYS','ratelimit:*')) do redis.call('DEL',k) end return 1", '0',
-  ], { stdio: 'ignore' });
-}
-
-async function gatewayRequest(method, path, token, body) {
-  const response = await fetch(`${apiUrl}${path}`, {
+async function api(method, path, token, body) {
+  const res = await fetch(API_URL + path, {
     method,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const text = await response.text();
-  if (!response.ok) throw new Error(`${method} ${path} returned ${response.status}: ${text}`);
-  return text ? JSON.parse(text) : null;
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(`${method} ${path} → ${res.status} ${text}`);
+  return data;
 }
 
-async function verifyFixture() {
+async function login(email) {
   resetRateLimits();
-  const auth = await gatewayRequest('POST', '/api/auth/login', null, {
-    email: manifest.accounts.restaurant.email,
-    password: manifest.password,
-  });
-  const order = await gatewayRequest('GET', `/api/orders/${manifest.orders.otherCustomer}`, auth.accessToken);
-  if (order.status !== 'CONFIRMED') {
-    throw new Error(`The seeded restaurant order is ${order.status}, expected CONFIRMED. Reset the E2E stack and seed it again.`);
+  return (await api('POST', '/api/auth/login', null, { email, password: manifest.password })).accessToken;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const state = { orderId: null, awaitingDriver: false };
+
+async function waitForOrderStatus(orderId, token, statuses, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const order = await api('GET', `/api/orders/${orderId}`, token);
+    if (statuses.includes(order.status)) return order;
+    if (Date.now() > deadline) throw new Error(`Order ${orderId} did not reach ${statuses.join('/')} (last ${order.status})`);
+    await sleep(500);
   }
 }
 
+const DRIVER_STEPS = ['pickup', 'start', 'complete'];
+
+/** Completes whatever delivery the QA driver is on (fixture only; the driver app covers the UI). */
+async function finishCurrentDelivery(driver) {
+  const current = await api('GET', '/api/deliveries/me/current', driver);
+  const first = current?.nextActions[0];
+  if (!first) return false;
+  for (const action of DRIVER_STEPS.slice(DRIVER_STEPS.indexOf(first))) {
+    await api('POST', `/api/deliveries/${current.id}/${action}`, driver, {});
+  }
+  return true;
+}
+
+/**
+ * After the suite: the seed's default state, a free and AVAILABLE QA driver. The customer and driver
+ * suites share this E2E stack and rely on it. If a flow left a ready order waiting for a driver, the
+ * driver going online picks it up (auto-dispatch sweep), so that delivery is finished too.
+ */
+async function restoreSeedDriverState() {
+  const driver = await login(manifest.accounts.driver.email);
+  await finishCurrentDelivery(driver);
+  await api('POST', '/api/drivers/me/online', driver, {});
+  if (state.awaitingDriver) {
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline && !(await finishCurrentDelivery(driver))) await sleep(1_000);
+    state.awaitingDriver = false;
+  }
+}
+
+/**
+ * Fixture (before and after the suite): the board starts with only the seeded orders. Kitchen orders
+ * left CONFIRMED/PREPARING by earlier runs (failed flows here, the customer app's checkout smoke) are
+ * cancelled as the owner, so a new order is never pushed below the fold (Maestro web can't scroll
+ * react-native-web lists). Seeded orders are never touched.
+ */
+async function cancelStrayKitchenOrders() {
+  const owner = await login(manifest.accounts.restaurant.email);
+  const seeded = new Set(Object.values(manifest.orders));
+  const { items } = await api('GET', `/api/orders/restaurant/${manifest.restaurants['QA Kitchen']}?limit=100`, owner);
+  const stray = items.filter((order) => ['CONFIRMED', 'PREPARING'].includes(order.status) && !seeded.has(order.id));
+  for (const order of stray) await api('PATCH', `/api/orders/${order.id}/status`, owner, { status: 'CANCELLED' });
+  if (stray.length) console.log(`[fixture] cancelled ${stray.length} leftover kitchen order(s)`);
+}
+
+function container(service) {
+  return `${PROJECT}-${service}-1`;
+}
+
+/** E2E stack only: clear rate-limit counters so repeated sign-ins across flows don't 429. */
+function resetRateLimits() {
+  execFileSync(
+    'docker',
+    ['exec', container('redis'), 'redis-cli', 'EVAL', "for _,k in ipairs(redis.call('KEYS','ratelimit:*')) do redis.call('DEL',k) end return 1", '0'],
+    { stdio: 'ignore' },
+  );
+}
+
+const actions = {
+  // CUSTOMER stand-in (the customer app covers this in its own suite): the QA customer orders and
+  // pays, so a fresh CONFIRMED order reaches the restaurant board. Never reuses seeded orders.
+  'scenario/order-confirmed': async () => {
+    const customer = await login(manifest.accounts.customer.email);
+    await api('DELETE', '/api/cart', customer);
+    await api('POST', '/api/cart/items', customer, { menuItemId: manifest.menuItems['QA Burger'], quantity: 2 });
+    const order = await api('POST', '/api/orders', customer, {});
+    const payment = await api('POST', '/api/payments', customer, { orderId: order.id });
+    await api('POST', `/api/payments/${payment.id}/process`, customer, { simulateFailure: false });
+    await waitForOrderStatus(order.id, customer, ['CONFIRMED']);
+    state.orderId = order.id;
+  },
+  // Fixture: no driver free, so a ready order stays READY_FOR_PICKUP (waiting) while the flow checks
+  // the board. Restored after the suite by restoreSeedDriverState.
+  'driver/offline': async () => {
+    const driver = await login(manifest.accounts.driver.email);
+    await finishCurrentDelivery(driver);
+    await api('POST', '/api/drivers/me/offline', driver, {});
+    state.awaitingDriver = true;
+  },
+  // Verification (as the customer): the order the kitchen marked ready is READY_FOR_PICKUP and
+  // automatic dispatch created its delivery. Nothing here creates or assigns a delivery.
+  'order/assert-dispatched': async () => {
+    const customer = await login(manifest.accounts.customer.email);
+    await waitForOrderStatus(state.orderId, customer, ['READY_FOR_PICKUP', 'DRIVER_ASSIGNED']);
+    const deadline = Date.now() + 20_000;
+    for (;;) {
+      const delivery = await api('GET', `/api/deliveries/by-order/${state.orderId}`, customer).catch(() => null);
+      if (delivery?.id) return;
+      if (Date.now() > deadline) throw new Error(`No delivery was dispatched for order ${state.orderId}`);
+      await sleep(1_000);
+    }
+  },
+};
+
+const control = createServer(async (req, res) => {
+  const action = (req.url ?? '').replace(/^\//, '');
+  try {
+    if (req.method !== 'POST' || !actions[action]) throw Object.assign(new Error(`Unknown action ${action}`), { code: 404 });
+    await actions[action]();
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ action, orderId: state.orderId }));
+  } catch (error) {
+    console.error(`[control] ${action} failed:`, error.message);
+    res.writeHead(error.code ?? 500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: error.message }));
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
+
 function buildWeb() {
-  console.log(`Building restaurant dashboard for web against ${apiUrl} ...`);
-  rmSync(buildDir, { recursive: true, force: true });
-  const result = spawnSync('npx', ['expo', 'export', '--platform', 'web', '--output-dir', buildDir, '--clear'], {
+  console.log(`Building web app against ${API_URL} ...`);
+  rmSync(WEB_BUILD, { recursive: true, force: true });
+  // --clear matters: a warm Metro cache can keep a previously inlined EXPO_PUBLIC_API_BASE_URL.
+  const result = spawnSync('npx', ['expo', 'export', '--platform', 'web', '--output-dir', WEB_BUILD, '--clear'], {
     cwd: APP_DIR,
     stdio: 'inherit',
     shell: process.platform === 'win32',
-    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: apiUrl },
+    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL },
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-async function waitFor(url, timeoutMs = 20_000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await fetch(url).then((response) => response.ok, () => false)) return;
-    await new Promise((resolveDelay) => setTimeout(resolveDelay, 250));
-  }
-  throw new Error(`Timed out waiting for ${url}`);
-}
-
+/** Asynchronous: flows call back into this process's control server (spawnSync would deadlock). */
 function runFlow(flow) {
   const name = flow.replace(/[\\/]/g, '__').replace(/\.yaml$/, '');
-  const outputDir = join(artifactsDir, name);
-  mkdirSync(outputDir, { recursive: true });
-  resetRateLimits();
-  const flowEnv = {
-    APP_URL: appUrl,
+  const outDir = join(ARTIFACTS, name);
+  mkdirSync(outDir, { recursive: true });
+  const env = {
+    APP_URL,
+    CONTROL_URL,
     EMAIL: manifest.accounts.restaurant.email,
     PASSWORD: manifest.password,
-    ORDER_ID: manifest.orders.otherCustomer,
+    RESTAURANT_ID: manifest.restaurants['QA Kitchen'],
   };
-  const result = spawnSync(maestro, [
+  const maestroArgs = [
     'test',
     join(E2E_DIR, 'flows', flow),
-    '--format', 'JUNIT',
-    '--output', join(artifactsDir, `${name}.junit.xml`),
-    '--test-output-dir', outputDir,
-    '--debug-output', outputDir,
+    '--format',
+    'JUNIT',
+    '--output',
+    join(ARTIFACTS, `${name}.junit.xml`),
+    '--test-output-dir',
+    outDir,
+    '--debug-output',
+    outDir,
     '--flatten-debug-output',
-    ...(hasFlag('headless') ? ['--headless', '--screen-size', screenSize] : []),
-    ...Object.entries(flowEnv).flatMap(([key, value]) => ['-e', `${key}=${value}`]),
-  ], { cwd: APP_DIR, stdio: 'inherit', shell: process.platform === 'win32' });
-  return { flow, ok: result.status === 0 };
+    ...(flag('headless') ? ['--headless', '--screen-size', SCREEN_SIZE] : []),
+    ...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+  ];
+  resetRateLimits();
+  const started = Date.now();
+  return new Promise((resolveFlow) => {
+    const child = spawn(MAESTRO, maestroArgs, { stdio: 'inherit', shell: process.platform === 'win32' });
+    child.on('exit', (code) => resolveFlow({ flow, ok: code === 0, seconds: Math.round((Date.now() - started) / 1000) }));
+  });
 }
 
 async function main() {
-  const gatewayHealth = await fetch(`${apiUrl}/health`).then((response) => response.ok, () => false);
-  if (!gatewayHealth) throw new Error(`E2E gateway is unavailable at ${apiUrl}. Start the isolated backend stack first.`);
-  await verifyFixture();
-  if (hasFlag('build') || !existsSync(join(buildDir, 'index.html'))) buildWeb();
+  if (flag('build') || !existsSync(join(WEB_BUILD, 'index.html'))) buildWeb();
+  mkdirSync(ARTIFACTS, { recursive: true });
 
-  mkdirSync(artifactsDir, { recursive: true });
-  const webServer = spawn(process.execPath, [join(E2E_DIR, 'scripts', 'serve-web.mjs'), buildDir, String(webPort)], { stdio: 'inherit' });
+  await fetch(`${API_URL}/health`).then(
+    (r) => {
+      if (!r.ok) throw new Error();
+    },
+    () => {
+      throw new Error(`E2E gateway not reachable at ${API_URL}. Start it with \`npm run e2e:env:up\` in delivery-plus.`);
+    },
+  );
+
+  const web = spawn(process.execPath, [join(E2E_DIR, 'scripts', 'serve-web.mjs'), WEB_BUILD, String(WEB_PORT)], { stdio: 'inherit' });
+  await new Promise((r) => control.listen(CONTROL_PORT, '127.0.0.1', r));
+  await sleep(500);
+  await cancelStrayKitchenOrders();
+
+  const results = [];
   try {
-    await waitFor(appUrl);
-    const results = suites[suite].map(runFlow);
-    for (const result of results) console.log(`${result.ok ? 'PASS' : 'FAIL'} ${result.flow}`);
-    process.exitCode = results.every((result) => result.ok) ? 0 : 1;
+    for (const flow of SUITES[suite]) {
+      console.log(`\n=== ${flow}`);
+      results.push(await runFlow(flow));
+    }
   } finally {
-    webServer.kill();
+    await restoreSeedDriverState().catch((error) => console.error('[cleanup] restoring the QA driver failed:', error.message));
+    await cancelStrayKitchenOrders().catch((error) => console.error('[cleanup] cancelling leftover orders failed:', error.message));
+    web.kill();
+    control.close();
   }
+
+  console.log(`\nSuite "${suite}" results (artifacts: ${ARTIFACTS})`);
+  for (const r of results) console.log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.flow}  (${r.seconds}s)`);
+  const failed = results.filter((r) => !r.ok).length;
+  console.log(`${results.length - failed}/${results.length} flows passed`);
+  process.exit(failed ? 1 : 0);
 }
 
 main().catch((error) => {
   console.error(error.message);
-  process.exitCode = 1;
+  process.exit(1);
 });

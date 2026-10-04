@@ -10,6 +10,8 @@ Replace the restaurant API stand-in with an owner-facing browser client. The MVP
 - [x] TypeScript + Expo Router web app, owner sign-in, and owner-scoped restaurant selector.
 - [x] Polling order board with `Start preparing` and `Ready for pickup` actions.
 - [x] Unit tests, CI/security workflows, and Maestro web E2E setup.
+- [x] Same architecture and design system as the customer and driver apps: `(auth)`/`(app)` route groups with an owner-role guard, shared UI kit (`Screen`/`ScreenHeader`, `Card`, `Badge`, `StateView`/`ErrorState`, `SkeletonList`), `useResource` cache + polling, `formatMoney`/`confirm`.
+- [x] Maestro smoke + business suites pass against the real isolated backend (runtime-created orders; web :8085, control :8092).
 - [ ] Replace the restaurant API actions in the customer business E2E with this client.
 
 ## Backend contract
@@ -18,11 +20,16 @@ The app calls the Delivery Plus Gateway only. Payment owns `CONFIRMED`; restaura
 
 The owner-scoped order-list response includes the order-item snapshots, so the dashboard renders order details inline; it does not make a separate `GET /api/orders/:id` request. That backend detail route also checks ownership. Cancellation is not offered in this kitchen MVP; `CANCELLED` is displayed read-only when returned. The board requests page 1 with a limit of 50 and does not yet navigate additional pages.
 
-## Pre-commit Verification
+## Verification (2026-10-04)
 
-The local web export, typecheck, lint, unit tests, and browser layout/transition checks passed on 2026-10-04. A browser-only intercepted fixture was used for visual and interaction checks; it is not a real-backend test.
+| Check | Result |
+| --- | --- |
+| `npm run typecheck`, `npm run lint` (0 warnings), `npm test` | Pass; 32 unit tests (order-status rules, restaurant selection, shared cache/format/session/API) |
+| Web export | Pass (part of the Maestro `--build`) |
+| Fresh isolated stack: backend `dev` + #124 (CORS :8085), `docker compose … down -v && up --build`, `seed:e2e` | Healthy, seeded |
+| `node e2e/scripts/run.mjs --suite all --build --headless` | **2/2 passed**: smoke (owner sees a new paid order with total and action) and business (start preparing → ready for pickup → automatic dispatch created the delivery) |
 
-The real-backend Maestro suite was **not run**: WSL reports `docker` unavailable because Docker Desktop integration is not enabled, and the Windows Docker CLI cannot connect to `npipe:////./pipe/dockerDesktopLinuxEngine` because that pipe is absent. No backend E2E volumes were reset or substituted with mocks.
+The first runs failed and found real problems, all fixed: `_shared/login.yaml` indentation (`Unknown Property: id`); the board opened the owner's first restaurant even when it was closed (now the first OPEN/BUSY one); orders left behind by earlier runs pushed the new order below the fold (fixture now cancels leftover non-seeded kitchen orders before and after the suite).
 
 ## Dependency Audit
 
@@ -43,6 +50,6 @@ Affected package-node counts are high: `@expo/cli`, `@expo/code-signing-certific
 
 ## Next
 
-1. Run the app against the isolated backend E2E stack and verify the seeded order lifecycle in Maestro.
-2. Integrate this client into the cross-app business flow, removing the restaurant API stand-in.
-3. Consider item availability and restaurant availability as a separately scoped follow-up.
+1. Merge this PR (#6) with all checks green.
+2. Phase 5: the customer app's cross-app business flow drives this app instead of the `restaurant/prepare|ready` API stand-in (customer + restaurant + driver UIs in one run).
+3. Item availability and restaurant open/closed controls as a separately scoped follow-up.

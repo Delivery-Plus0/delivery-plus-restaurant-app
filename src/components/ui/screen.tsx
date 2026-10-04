@@ -40,7 +40,7 @@ export function ScreenHeader({ title, subtitle, showBack = false, right }: Scree
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/dashboard');
+      router.replace('/home');
     }
   };
 

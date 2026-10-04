@@ -12,6 +12,7 @@ import { Spacing } from '@/constants/theme';
 import { loginAccount } from '@/services/auth';
 import { setSession } from '@/services/session';
 import { describeLoginError } from '@/utils/login-errors';
+import { OWNER_ROLE } from '@/utils/order-status';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -39,12 +40,13 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     try {
       const auth = await loginAccount({ email: email.trim(), password });
-      if (auth.role !== 'RESTAURANT_OWNER') {
-        setError('Sign in with a restaurant owner account.');
+      if (auth.role !== OWNER_ROLE) {
+        // The credentials are valid but this app is for restaurant owners only; don't keep the session.
+        setError('This app is for restaurant owners. Sign in with an owner account, or use the Delivery Plus customer or driver app.');
         return;
       }
       await setSession(auth.accessToken);
-      router.replace('/dashboard');
+      router.replace('/home');
     } catch (caught) {
       const consecutiveFailures = failures + 1;
       setFailures(consecutiveFailures);
