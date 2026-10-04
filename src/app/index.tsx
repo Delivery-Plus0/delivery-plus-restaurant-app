@@ -9,5 +9,5 @@ export default function RootRedirect() {
     return null;
   }
 
-  return <Redirect href={session.session ? '/home' : '/welcome'} />;
+  return <Redirect href={session.session ? '/home' : '/login'} />;
 }

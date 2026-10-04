@@ -1,6 +1,6 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { AuthFormShell, emailPattern } from '@/components/auth-form-shell';
 import { ThemedText } from '@/components/themed-text';
@@ -12,6 +12,7 @@ import { Spacing } from '@/constants/theme';
 import { loginAccount } from '@/services/auth';
 import { setSession } from '@/services/session';
 import { describeLoginError } from '@/utils/login-errors';
+import { OWNER_ROLE } from '@/utils/order-status';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -39,6 +40,11 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     try {
       const auth = await loginAccount({ email: email.trim(), password });
+      if (auth.role !== OWNER_ROLE) {
+        // The credentials are valid but this app is for restaurant owners only; don't keep the session.
+        setError('This app is for restaurant owners. Sign in with an owner account, or use the Delivery Plus customer or driver app.');
+        return;
+      }
       await setSession(auth.accessToken);
       router.replace('/home');
     } catch (caught) {
@@ -62,19 +68,12 @@ export default function LoginScreen() {
 
   return (
     <AuthFormShell
-      title="Welcome back"
-      subtitle="Sign in to continue your order."
+      title="Restaurant sign in"
+      subtitle="Open your kitchen order desk."
       footer={
-        <>
-          <ThemedText type="small" themeColor="textSecondary">
-            New to Delivery Plus?
-          </ThemedText>
-          <Link href="/register" replace asChild>
-            <Pressable accessibilityRole="link" hitSlop={8}>
-              <ThemedText type="linkPrimary">Create an account</ThemedText>
-            </Pressable>
-          </Link>
-        </>
+        <ThemedText type="small" themeColor="textSecondary">
+          Restaurant owner accounts are provisioned by your administrator.
+        </ThemedText>
       }
     >
       <FormTextInput

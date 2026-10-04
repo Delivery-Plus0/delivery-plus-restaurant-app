@@ -1,33 +1,30 @@
 # Contributing
 
-## Before you start
+## Before changing the app
 
-Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) first, then [planning.md](planning.md) for the current sprint. This app talks only to the Delivery Plus API gateway; the backend lives in [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) (default branch `dev`). Check its `docs/services/<name>.md` and public OpenAPI contract (`docs/openapi/delivery-plus-public.json`) before relying on an endpoint.
+Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) and [planning.md](planning.md). The backend repository at [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) is the source of truth for API behavior; verify routes and DTOs in its `docs/openapi/delivery-plus-public.json` and service docs before relying on them.
 
 ## Workflow
 
-1. Branch from `dev` with a focused name, for example `feat/order-rating` or `fix/checkout-retry`.
-2. Copy `.env.example` to `.env.local` (git-ignored) and point `EXPO_PUBLIC_API_BASE_URL` at your gateway (`http://localhost:3000` for the backend dev stack).
-3. Install Node.js 22 and run `npm ci`.
-4. Run the backend dev stack (see the backend README), then `npm run web` (or `npm start` for Expo Go).
-5. Make a small, tested change. Every new control gets a `testID` (and `nativeID` on web) from its first commit.
+1. Branch from `dev` with a focused name such as `feat/order-filters` or `fix/polling-state`.
+2. Use Node.js 22 and run `npm ci`.
+3. Set `EXPO_PUBLIC_API_BASE_URL` in `.env.local` to the API Gateway.
+4. Keep authorization and lifecycle rules on the backend. The app must not attempt to set `CONFIRMED` or bypass owner-scoped restaurant selection.
+5. Add a `testID` and matching `nativeID` to every new interactive control.
 
 ## Checks
 
-Run before opening a pull request:
+Before opening a pull request, run:
 
 ```bash
 npm run typecheck
-npm run lint        # zero warnings allowed
-npm test            # vitest
+npm run lint
+npm test
+npm run export:web
 ```
 
-UI changes on a critical path also need the Maestro suites (see [e2e/README.md](e2e/README.md)): start the isolated backend E2E stack (`npm run e2e:env:reset` in the backend repo), then `node e2e/scripts/run.mjs --suite smoke --build --headless`.
+For order workflow changes, run the Maestro browser suite against a fresh backend E2E stack; see [e2e/README.md](e2e/README.md).
 
 ## Pull requests
 
-Open pull requests against `dev` and use the pull request template. Describe the user-visible impact, the related issue, the tests performed (unit, Maestro) and any backend contract the change depends on. Keep unrelated refactors out of the change. Pull requests must pass CI, must not commit secrets or generated output (`dist/`, `e2e/.web-build/`, `e2e/.artifacts/`), and need review from the code owners.
-
-Use clear imperative commit subjects, such as `fix(checkout): keep the cart when payment fails`.
-
-Branches: `dev` (default; integration), `testing` (release candidates), `main` (released).
+Open pull requests against `dev` and complete the pull request template. Include the backend routes used and the tests performed. Keep generated output, `.env.local`, and credentials out of commits. CI, security scans, and code-owner review should pass before merge.

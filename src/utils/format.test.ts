@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { groupMenu } from '@/state/catalog';
-
 import { firstName, formatMoney, formatRelativeTime } from './format';
 
 vi.mock('@/hooks/use-resource', () => ({ useResource: vi.fn() }));
@@ -29,29 +27,5 @@ describe('firstName', () => {
   it('returns the first word of a full name', () => {
     expect(firstName('  Ahmed  Maher ')).toBe('Ahmed');
     expect(firstName('')).toBeNull();
-  });
-});
-
-describe('groupMenu', () => {
-  it('groups items by category order and puts uncategorized items last', () => {
-    const sections = groupMenu({
-      restaurantId: 'r-1',
-      categories: [
-        { id: 'drinks', restaurantId: 'r-1', name: 'Drinks', displayOrder: 2 },
-        { id: 'mains', restaurantId: 'r-1', name: 'Mains', displayOrder: 1 },
-        { id: 'empty', restaurantId: 'r-1', name: 'Empty', displayOrder: 0 },
-      ],
-      items: [
-        { id: 'cola', restaurantId: 'r-1', categoryId: 'drinks', name: 'Cola', price: '2.00', available: true },
-        { id: 'burger', restaurantId: 'r-1', categoryId: 'mains', name: 'Burger', price: '9.00', available: true },
-        { id: 'special', restaurantId: 'r-1', name: 'Special', price: '12.00', available: true },
-      ],
-    });
-
-    expect(sections.map((section) => [section.title, section.data.map((item) => item.id)])).toEqual([
-      ['Mains', ['burger']],
-      ['Drinks', ['cola']],
-      ['More', ['special']],
-    ]);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "name": "customer-mobile",
+  "name": "restaurant-dashboard",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -39,7 +39,6 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -48,7 +47,6 @@
     "test": "vitest run",
     "export:web": "expo export --platform web",
     "e2e:smoke": "node e2e/scripts/run.mjs --suite smoke",
-    "e2e:regression": "node e2e/scripts/run.mjs --suite regression",
     "e2e:business": "node e2e/scripts/run.mjs --suite business",
     "e2e:all": "node e2e/scripts/run.mjs --suite all"
   },

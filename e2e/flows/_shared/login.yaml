@@ -1,4 +1,4 @@
-# Shared: start from a clean browser/app state and sign in as ${EMAIL}.
+# Shared: start from a clean browser state and sign in as ${EMAIL} (the QA restaurant owner).
 url: ${APP_URL}/login
 ---
 - launchApp:
@@ -17,5 +17,16 @@ url: ${APP_URL}/login
     id: login-submit
 - extendedWaitUntil:
     visible:
-      id: home-title
+      id: restaurant-heading
     timeout: 20000
+# The QA owner also owns QA Night Cafe (closed); work on QA Kitchen (${RESTAURANT_ID}).
+- runFlow:
+    when:
+      visible:
+        id: restaurant-select-${RESTAURANT_ID}
+    commands:
+      - tapOn:
+          id: restaurant-select-${RESTAURANT_ID}
+- extendedWaitUntil:
+    visible: 'QA Kitchen'
+    timeout: 10000

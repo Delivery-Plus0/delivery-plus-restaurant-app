@@ -1,0 +1,28 @@
+url: ${APP_URL}
+name: Restaurant owner signs in and sees a new paid order on the board
+tags:
+  - smoke
+---
+# CUSTOMER (stand-in): a fresh order is placed and paid, so it is CONFIRMED for QA Kitchen.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: scenario/order-confirmed
+- runFlow: ../_shared/login.yaml
+- assertVisible:
+    id: restaurant-heading
+- assertVisible: 'QA Kitchen'
+- assertVisible:
+    id: restaurant-status
+    text: Open
+# The new order is in the "New orders" lane with its one kitchen action.
+- extendedWaitUntil:
+    visible:
+      id: order-${output.control.orderId}-status
+      text: Confirmed
+    timeout: 30000
+- assertVisible:
+    id: order-${output.control.orderId}-total
+    text: '\$20\.00'
+- assertVisible:
+    id: order-${output.control.orderId}-start-preparing

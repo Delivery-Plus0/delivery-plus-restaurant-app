@@ -1,0 +1,45 @@
+url: ${APP_URL}
+name: Restaurant owner prepares a paid order and marks it ready; automatic dispatch creates the delivery
+tags:
+  - business
+---
+# Fixture: no driver free, so the order stays "Ready for pickup" (waiting for a driver) while the board
+# is checked. The runner puts the QA driver back online after the suite.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: driver/offline
+# CUSTOMER (stand-in): a fresh order is placed and paid.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: scenario/order-confirmed
+- runFlow: ../_shared/login.yaml
+
+# RESTAURANT APP (real UI): start preparing → ready for pickup.
+- extendedWaitUntil:
+    visible:
+      id: order-${output.control.orderId}-start-preparing
+    timeout: 30000
+- tapOn:
+    id: order-${output.control.orderId}-start-preparing
+- extendedWaitUntil:
+    visible:
+      id: order-${output.control.orderId}-status
+      text: In kitchen
+    timeout: 15000
+- tapOn:
+    id: order-${output.control.orderId}-ready-for-pickup
+- extendedWaitUntil:
+    visible:
+      id: order-${output.control.orderId}-status
+      text: Ready for pickup
+    timeout: 15000
+- assertNotVisible:
+    id: order-${output.control.orderId}-ready-for-pickup
+
+# BACKEND: marking it ready was enough; automatic dispatch created the delivery (no dispatch step).
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: order/assert-dispatched

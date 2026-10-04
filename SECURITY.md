@@ -2,23 +2,23 @@
 
 ## Reporting a vulnerability
 
-Please do not open an issue for a suspected vulnerability. Contact the repository maintainers privately, or use GitHub's private vulnerability reporting when enabled.
+Do not open a public issue for a suspected vulnerability. Contact the repository maintainers privately or use GitHub private vulnerability reporting when available.
 
-Include the affected screen or module, a concise description, reproduction steps, impact, and a suggested fix if you have one. Do not include passwords, tokens, customer data or other secrets in the report.
+Include the affected route or screen, reproduction steps, impact, and a suggested fix. Do not include passwords, access tokens, restaurant data, or other secrets.
 
 ## Scope
 
 Please report:
 
-- a session token stored or logged outside the platform secure store (`expo-secure-store` on native, the documented web fallback)
-- secrets, API keys or credentials committed to the repository or bundled into the app
-- a screen that shows another customer's data, or a request that sends another user's identifier the server should derive from the token
-- deep links or navigation that bypass sign-in
-- unsafe handling of server-provided content (e.g. rendering untrusted HTML)
+- leaked, logged, or incorrectly transmitted session tokens or credentials
+- secrets or API keys committed to the repository or bundled into the client
+- an owner able to access another restaurant's orders
+- a request or screen that bypasses sign-in or relies on client-side ownership as authorization
+- unsafe rendering of server-provided content
 
-Authorization is enforced by the backend; an app-side check that can be bypassed is still worth reporting, but the server-side issue belongs in the [backend repository](https://github.com/Yousefa7medmaher/delivery-plus/blob/dev/SECURITY.md).
+The backend is authoritative for role checks, ownership, and order transitions. Report server-side authorization issues to [the backend security policy](https://github.com/Yousefa7medmaher/delivery-plus/blob/dev/SECURITY.md) as well.
 
-Not considered vulnerabilities: the development API URL in `.env.example`, and test-only QA credentials used by the E2E suites against a local stack.
+The development gateway URL in `.env.example` and test-only QA credentials used against a local E2E stack are not production secrets.
 
 ## Responsible disclosure
 
