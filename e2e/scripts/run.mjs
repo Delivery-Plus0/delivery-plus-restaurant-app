@@ -58,8 +58,23 @@ const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 // Gateway client used by the control server (customer stand-in, driver fixture, verifications).
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * fetch reuses pooled keep-alive connections. When the runner is idle longer than the gateway's
+ * keep-alive timeout (slow fixtures), the next request can land on a socket the server already closed
+ * (UND_ERR_SOCKET, nothing was sent), and fetch retries only idempotent methods. Retry once on exactly
+ * that error.
+ */
+async function fetchRetryingClosedSocket(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (error) {
+    if (error?.cause?.code !== 'UND_ERR_SOCKET') throw error;
+    return fetch(url, init);
+  }
+}
+
 async function api(method, path, token, body) {
-  const res = await fetch(API_URL + path, {
+  const res = await fetchRetryingClosedSocket(API_URL + path, {
     method,
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
