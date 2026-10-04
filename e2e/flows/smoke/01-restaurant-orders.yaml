@@ -1,0 +1,18 @@
+url: ${APP_URL}
+name: Restaurant owner signs in and sees the order queue
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: restaurant-heading
+    timeout: 20000
+- assertVisible: QA Kitchen
+- extendedWaitUntil:
+    visible:
+      id: order-${ORDER_ID}-status
+      text: Confirmed
+    timeout: 20000
+- assertVisible:
+    id: order-${ORDER_ID}-start-preparing

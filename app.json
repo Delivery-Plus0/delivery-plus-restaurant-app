@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "customer-mobile",
-    "slug": "customer-mobile",
+    "name": "Delivery Plus Restaurant",
+    "slug": "delivery-plus-restaurant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "customermobile",
+    "scheme": "deliveryplusrestaurant",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFCFC",
+          "backgroundColor": "#F4F5EF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

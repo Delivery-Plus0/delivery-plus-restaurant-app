@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement to the customer app
+about: Suggest an improvement to the restaurant dashboard
 labels: enhancement
 ---
 
@@ -8,7 +8,7 @@ labels: enhancement
 
 ## Proposed solution
 
-## Screens affected
+## Dashboard area affected
 
 ## Backend contracts needed
 <!-- Existing endpoints, or new backend work (link the delivery-plus issue). -->

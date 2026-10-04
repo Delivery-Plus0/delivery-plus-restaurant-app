@@ -1,0 +1,23 @@
+url: ${APP_URL}
+name: Restaurant owner prepares and readies a confirmed order
+tags:
+  - business
+---
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: order-${ORDER_ID}-start-preparing
+    timeout: 20000
+- tapOn:
+    id: order-${ORDER_ID}-start-preparing
+- extendedWaitUntil:
+    visible:
+      id: order-${ORDER_ID}-ready-for-pickup
+    timeout: 20000
+- tapOn:
+    id: order-${ORDER_ID}-ready-for-pickup
+- extendedWaitUntil:
+    visible:
+      id: order-${ORDER_ID}-status
+      text: Ready for pickup
+    timeout: 20000

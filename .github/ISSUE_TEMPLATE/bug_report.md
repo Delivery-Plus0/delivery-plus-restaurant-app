@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible problem in the customer app
+about: Report a reproducible problem in the restaurant dashboard
 labels: bug
 ---
 
@@ -17,7 +17,7 @@ labels: bug
 ## Actual behavior
 
 ## Environment
-- Platform: web / Android / iOS (device or emulator, OS version)
+- Platform: browser and version / viewport size
 - App version or commit:
 - Backend: local dev stack / E2E stack / other (API URL):
 

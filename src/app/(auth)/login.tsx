@@ -1,6 +1,6 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { AuthFormShell, emailPattern } from '@/components/auth-form-shell';
 import { ThemedText } from '@/components/themed-text';
@@ -39,8 +39,12 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     try {
       const auth = await loginAccount({ email: email.trim(), password });
+      if (auth.role !== 'RESTAURANT_OWNER') {
+        setError('Sign in with a restaurant owner account.');
+        return;
+      }
       await setSession(auth.accessToken);
-      router.replace('/home');
+      router.replace('/dashboard');
     } catch (caught) {
       const consecutiveFailures = failures + 1;
       setFailures(consecutiveFailures);
@@ -62,19 +66,12 @@ export default function LoginScreen() {
 
   return (
     <AuthFormShell
-      title="Welcome back"
-      subtitle="Sign in to continue your order."
+      title="Restaurant sign in"
+      subtitle="Open your kitchen order desk."
       footer={
-        <>
-          <ThemedText type="small" themeColor="textSecondary">
-            New to Delivery Plus?
-          </ThemedText>
-          <Link href="/register" replace asChild>
-            <Pressable accessibilityRole="link" hitSlop={8}>
-              <ThemedText type="linkPrimary">Create an account</ThemedText>
-            </Pressable>
-          </Link>
-        </>
+        <ThemedText type="small" themeColor="textSecondary">
+          Restaurant owner accounts are provisioned by your administrator.
+        </ThemedText>
       }
     >
       <FormTextInput

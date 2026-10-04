@@ -1,4 +1,4 @@
-# Shared: start from a clean browser/app state and sign in as ${EMAIL}.
+# Shared: start from a clean browser state and sign in as ${EMAIL}.
 url: ${APP_URL}/login
 ---
 - launchApp:
@@ -17,5 +17,5 @@ url: ${APP_URL}/login
     id: login-submit
 - extendedWaitUntil:
     visible:
-      id: home-title
+    id: restaurant-heading
     timeout: 20000

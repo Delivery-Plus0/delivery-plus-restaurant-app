@@ -1,1 +1,1 @@
-@AGENTS.md
+Read `AGENTS.md`, `.project-context/00-INDEX.md`, and `planning.md` before making changes. This is a web-first TypeScript/Expo Router restaurant dashboard; the backend owns authorization and order lifecycle rules. Verify API assumptions against the backend OpenAPI contract and run the repository checks described in `CONTRIBUTING.md`.
