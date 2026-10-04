@@ -1,0 +1,44 @@
+version: 2
+
+updates:
+  # npm dependencies.
+  #
+  # Expo pins React, React Native and every Expo / React Native library to versions matched to its
+  # SDK; bumping one of them on its own breaks the build (e.g. react-native-reanimated 4.7 on SDK 57).
+  # Those move together, in a dedicated PR, with `npx expo install --fix` (or an SDK upgrade), so
+  # Dependabot ignores them. TypeScript and ESLint majors are tied to eslint-config-expo and the SDK's
+  # TypeScript support, so only their patch/minor updates are proposed.
+  - package-ecosystem: "npm"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "@types/react"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+      - "automated"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"

@@ -1,0 +1,8 @@
+# Default owner for everything in the customer app.
+* @Yousefa7medmaher
+
+# Build, CI and E2E infrastructure.
+/.github/ @Yousefa7medmaher
+/e2e/ @Yousefa7medmaher
+/app.json @Yousefa7medmaher
+/SECURITY.md @Yousefa7medmaher

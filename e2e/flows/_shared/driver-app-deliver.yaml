@@ -1,0 +1,30 @@
+# Shared (cross-app): in the driver app, take the current delivery through pickup → start → complete
+# with the app's own buttons, and check the driver is free again afterwards.
+url: ${DRIVER_APP_URL}/home
+---
+- openLink: ${DRIVER_APP_URL}/home
+- extendedWaitUntil:
+    visible:
+      id: delivery-action-pickup
+    timeout: 20000
+- tapOn:
+    id: delivery-action-pickup
+- extendedWaitUntil:
+    visible:
+      id: delivery-action-start
+    timeout: 15000
+- tapOn:
+    id: delivery-action-start
+- extendedWaitUntil:
+    visible:
+      id: delivery-action-complete
+    timeout: 15000
+- tapOn:
+    id: delivery-action-complete
+- extendedWaitUntil:
+    visible:
+      id: waiting-for-job
+    timeout: 20000
+- assertVisible:
+    id: driver-status
+    text: 'Online · waiting for a job'

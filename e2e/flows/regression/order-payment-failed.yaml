@@ -1,0 +1,18 @@
+url: ${APP_URL}
+name: Declined payment shows the order as Failed with no delivery
+tags:
+  - regression
+---
+- runFlow: ../_shared/login.yaml
+# Seed scenario S2: payment forced to decline through the API (simulateFailure: true).
+- openLink: ${APP_URL}/order/${FAILED_ORDER_ID}
+- extendedWaitUntil:
+    visible:
+      id: order-status
+      text: Failed
+    timeout: 20000
+- assertVisible: This order could not be completed\.
+- assertNotVisible:
+    id: delivery-card
+- assertNotVisible:
+    id: order-cancel

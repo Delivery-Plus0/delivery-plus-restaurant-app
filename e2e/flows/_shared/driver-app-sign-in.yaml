@@ -1,0 +1,22 @@
+# Shared (cross-app): open the real driver app (${DRIVER_APP_URL}, the driver repo's web build served
+# by the runner) in the same browser and sign in as the QA driver. Each app keeps its own session
+# (separate origins), so the flow can switch between them with openLink.
+url: ${DRIVER_APP_URL}/login
+---
+- openLink: ${DRIVER_APP_URL}/login
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+- tapOn:
+    id: login-email
+- inputText: ${DRIVER_EMAIL}
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login-submit
+- extendedWaitUntil:
+    visible:
+      id: status-card
+    timeout: 20000

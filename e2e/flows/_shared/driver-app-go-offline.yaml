@@ -1,0 +1,18 @@
+# Shared (cross-app): in the driver app, make sure the QA driver is offline (the seed leaves them
+# online). Taps "Go offline" only if it is shown.
+url: ${DRIVER_APP_URL}/home
+---
+- runFlow:
+    when:
+      visible:
+        id: go-offline
+    commands:
+      - tapOn:
+          id: go-offline
+- extendedWaitUntil:
+    visible:
+      id: go-online
+    timeout: 15000
+- assertVisible:
+    id: driver-status
+    text: Offline

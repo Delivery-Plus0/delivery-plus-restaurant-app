@@ -1,0 +1,54 @@
+url: ${APP_URL}
+name: Customer checks out and lands on the new order
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- runFlow: ../_shared/open-qa-kitchen.yaml
+- scrollUntilVisible:
+    element:
+      id: add-QA Fries
+    direction: DOWN
+- tapOn:
+    id: add-QA Fries
+- extendedWaitUntil:
+    visible:
+      id: qty-QA Fries-value
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: add-QA Lemonade
+    direction: DOWN
+- tapOn:
+    id: add-QA Lemonade
+- extendedWaitUntil:
+    visible:
+      id: qty-QA Lemonade-value
+    timeout: 15000
+- tapOn:
+    id: cart-bar
+- extendedWaitUntil:
+    visible:
+      id: cart-subtotal
+      text: '\$7\.00'
+    timeout: 15000
+- tapOn:
+    id: cart-checkout
+- extendedWaitUntil:
+    visible:
+      id: checkout-place-order
+    timeout: 15000
+- assertVisible: 'Place order · \$7\.00'
+- tapOn:
+    id: checkout-place-order
+# Real order + payment through the gateway; the app routes to the order it created.
+- extendedWaitUntil:
+    visible:
+      id: order-placed
+    timeout: 20000
+- assertVisible:
+    id: order-status
+    text: Confirmed
+# Order lines render as one text node ("1× QA Fries"); Maestro text is a full-match regex.
+- assertVisible: '.*QA Fries'
+- assertVisible: '.*QA Lemonade'

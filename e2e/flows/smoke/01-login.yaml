@@ -1,0 +1,14 @@
+url: ${APP_URL}
+name: Customer signs in and lands on Home
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- assertVisible:
+    id: home-title
+    text: What are you craving\?
+# The seeded restaurant list loaded from the backend, not just the shell.
+- extendedWaitUntil:
+    visible:
+      id: restaurant-QA Kitchen
+    timeout: 15000

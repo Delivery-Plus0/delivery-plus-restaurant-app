@@ -1,0 +1,67 @@
+name: Security
+
+# Dependency, filesystem and secret scanning.
+#
+# CodeQL (used in the backend repository) is not run here: code scanning on a private repository
+# requires GitHub Advanced Security. Results are printed to the job log instead of uploaded as SARIF
+# for the same reason.
+
+on:
+  pull_request:
+  push:
+    branches: [main, testing, dev]
+  schedule:
+    # Weekly, so newly disclosed advisories against unchanged dependencies are still caught.
+    - cron: '23 4 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: Dependency audit (npm audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-fund
+
+      # Blocking gate on critical advisories; high/moderate are reported without failing, as in
+      # the backend (many come from the Expo/React Native toolchain and need an SDK upgrade).
+      - name: npm audit (critical, blocking)
+        run: npm audit --audit-level=critical
+
+      - name: npm audit (high/moderate, report only)
+        if: always()
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  filesystem-scan:
+    name: Filesystem + secret scan (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan (vulnerabilities + secrets)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: '1'

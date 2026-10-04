@@ -1,0 +1,140 @@
+name: E2E (Maestro)
+
+# UI automation against a real, isolated backend:
+#   backend repo → docker compose E2E stack (gateway :3100) → deterministic seed → web build of this
+#   app → Maestro (headless Chromium) → artifacts.
+#
+# - Pull requests run the smoke suite (critical customer path, ~4 min of flows).
+# - A nightly schedule and manual runs execute everything: smoke + regression (failure paths,
+#   authorization, offline recovery) + the cross-application business cycle.
+#
+# Requires the backend branch in BACKEND_REF to contain docker-compose.e2e.yml and `npm run
+# seed:e2e` (added alongside this workflow; see planning.md → E2E automation).
+#
+# Cross-app flows (regression/order-awaiting-driver, business) drive the real driver app, which lives
+# in a private repo. GITHUB_TOKEN can't read another private repo, so they need the secret
+# DRIVER_APP_READ_TOKEN (fine-grained token: Contents read-only on delivery-plus-driver-app). Without
+# it they are skipped with a warning; smoke on PRs never needs it.
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Suite to run'
+        type: choice
+        options: [smoke, regression, business, all]
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BACKEND_REPOSITORY: ${{ vars.BACKEND_REPOSITORY || 'Yousefa7medmaher/delivery-plus' }}
+  BACKEND_REF: ${{ vars.BACKEND_REF || 'dev' }}
+  MAESTRO_VERSION: 2.11.0
+  E2E_API_URL: http://localhost:3100
+  E2E_MANIFEST: ${{ github.workspace }}/backend/e2e-seed-manifest.json
+  SUITE: ${{ github.event_name == 'pull_request' && 'smoke' || inputs.suite || 'all' }}
+  DRIVER_APP_REPOSITORY: ${{ vars.DRIVER_APP_REPOSITORY || 'Yousefa7medmaher/delivery-plus-driver-app' }}
+  DRIVER_APP_REF: ${{ vars.DRIVER_APP_REF || 'dev' }}
+  DRIVER_APP_DIR: ${{ github.workspace }}/driver-app
+  HAS_DRIVER_APP_TOKEN: ${{ secrets.DRIVER_APP_READ_TOKEN != '' }}
+
+jobs:
+  maestro-web:
+    name: Maestro web (${{ github.event_name == 'pull_request' && 'smoke' || inputs.suite || 'all' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out backend
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.BACKEND_REPOSITORY }}
+          ref: ${{ env.BACKEND_REF }}
+          path: backend
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+
+      # Maestro needs Java 17+.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Maestro CLI
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Start isolated E2E backend (fresh volumes)
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run e2e:env:up
+
+      - name: Seed deterministic E2E data
+        working-directory: backend
+        run: npm run seed:e2e
+        env:
+          API_URL: ${{ env.E2E_API_URL }}
+
+      - name: Install app
+        run: npm ci --no-audit --no-fund
+
+      - name: Check out driver app (cross-app flows)
+        if: env.SUITE != 'smoke' && env.HAS_DRIVER_APP_TOKEN == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DRIVER_APP_REPOSITORY }}
+          ref: ${{ env.DRIVER_APP_REF }}
+          token: ${{ secrets.DRIVER_APP_READ_TOKEN }}
+          path: driver-app
+
+      - name: Install driver app
+        if: env.SUITE != 'smoke' && env.HAS_DRIVER_APP_TOKEN == 'true'
+        working-directory: driver-app
+        run: npm ci --no-audit --no-fund
+
+      - name: Run Maestro suite (customer app + driver app)
+        run: node e2e/scripts/run.mjs --suite "$SUITE" --build --headless
+        env:
+          E2E_SKIP_CROSS_APP: ${{ env.HAS_DRIVER_APP_TOKEN == 'true' && '0' || '1' }}
+
+      - name: Collect backend logs
+        if: failure()
+        working-directory: backend
+        run: |
+          mkdir -p ../e2e/.artifacts/backend
+          docker compose -p delivery-plus-e2e -f docker-compose.base.yml -f docker-compose.test.yml -f docker-compose.e2e.yml ps > ../e2e/.artifacts/backend/compose-ps.txt || true
+          docker compose -p delivery-plus-e2e -f docker-compose.base.yml -f docker-compose.test.yml -f docker-compose.e2e.yml logs --no-color --tail=300 > ../e2e/.artifacts/backend/compose-logs.txt || true
+
+      # JUnit reports always; screenshots/debug output are written for every flow and are most
+      # useful on failure.
+      - name: Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ env.SUITE }}-${{ github.run_id }}
+          path: e2e/.artifacts/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Tear down E2E backend
+        if: always()
+        working-directory: backend
+        run: npm run e2e:env:down

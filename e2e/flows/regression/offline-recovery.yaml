@@ -1,0 +1,34 @@
+url: ${APP_URL}
+name: Temporary API outage shows offline state and recovers without losing the session
+tags:
+  - regression
+---
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: restaurant-QA Kitchen
+    timeout: 15000
+# The runner stops the E2E API gateway container.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: gateway/stop
+# Reload the page with the gateway down: the app must show the offline state, not sign the user out.
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: error-state
+    timeout: 30000
+- assertVisible: You appear to be offline
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: gateway/start
+- tapOn: Try again
+# Same session, data loads again.
+- extendedWaitUntil:
+    visible:
+      id: restaurant-QA Kitchen
+    timeout: 30000
+- assertVisible:
+    id: home-title

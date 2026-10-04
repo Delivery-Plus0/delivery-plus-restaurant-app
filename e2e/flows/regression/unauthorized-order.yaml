@@ -1,0 +1,17 @@
+url: ${APP_URL}
+name: Customer cannot open another customer's order
+tags:
+  - regression
+  - security
+---
+- runFlow: ../_shared/login.yaml
+# Seed scenario S4 belongs to qa.customer2; the backend answers 403 and the app must not leak it.
+- openLink: ${APP_URL}/order/${OTHER_ORDER_ID}
+- extendedWaitUntil:
+    visible:
+      id: error-state
+    timeout: 20000
+- assertVisible: You do not have access to this order
+- assertNotVisible: QA Lemonade
+- assertNotVisible:
+    id: delivery-card

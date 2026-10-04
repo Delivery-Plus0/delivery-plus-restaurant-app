@@ -1,0 +1,15 @@
+# Shared: search for the seeded restaurant and open its menu (expects to start on Home).
+url: ${APP_URL}
+---
+- tapOn:
+    id: home-search
+- inputText: QA Kitchen
+- extendedWaitUntil:
+    visible:
+      id: restaurant-QA Kitchen
+    timeout: 15000
+- tapOn:
+    id: restaurant-QA Kitchen
+- extendedWaitUntil:
+    visible: QA Burger
+    timeout: 15000

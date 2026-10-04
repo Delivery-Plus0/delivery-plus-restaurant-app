@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main, testing, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, export
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # React Native 0.86 supports Node ^20.19.4 || ^22.13.0; 22 matches the backend's CI.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint (zero warnings)
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      # Bundles every route with Metro and statically renders it, catching broken imports and
+      # render-time errors that typecheck and unit tests miss. Native builds need EAS (not run here).
+      - name: Export web bundle
+        run: npm run export:web -- --output-dir dist
+        env:
+          CI: 1

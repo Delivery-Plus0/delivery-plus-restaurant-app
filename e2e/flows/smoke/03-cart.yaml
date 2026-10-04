@@ -1,0 +1,41 @@
+url: ${APP_URL}
+name: Customer adds an item, changes quantity and sees the total update
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- runFlow: ../_shared/open-qa-kitchen.yaml
+- tapOn:
+    id: add-QA Burger
+- extendedWaitUntil:
+    visible:
+      id: qty-QA Burger-value
+      text: '1'
+    timeout: 15000
+- tapOn:
+    id: cart-bar
+- extendedWaitUntil:
+    visible:
+      id: cart-subtotal
+      text: '\$10\.00'
+    timeout: 15000
+- tapOn:
+    id: cart-qty-QA Burger-increase
+- extendedWaitUntil:
+    visible:
+      id: cart-qty-QA Burger-value
+      text: '2'
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: cart-subtotal
+      text: '\$20\.00'
+    timeout: 10000
+# Removing the last unit empties the cart (leaves no state behind for other flows).
+- tapOn:
+    id: cart-qty-QA Burger-decrease
+- tapOn:
+    id: cart-qty-QA Burger-decrease
+- extendedWaitUntil:
+    visible: Your cart is empty
+    timeout: 10000

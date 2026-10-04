@@ -1,0 +1,21 @@
+# Shared: start from a clean browser/app state and sign in as ${EMAIL}.
+url: ${APP_URL}/login
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+- tapOn:
+    id: login-email
+- inputText: ${EMAIL}
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login-submit
+- extendedWaitUntil:
+    visible:
+      id: home-title
+    timeout: 20000

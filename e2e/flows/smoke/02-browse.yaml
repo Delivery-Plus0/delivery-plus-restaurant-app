@@ -1,0 +1,39 @@
+url: ${APP_URL}
+name: Customer searches, opens a restaurant and reads its menu
+tags:
+  - smoke
+---
+- runFlow: ../_shared/login.yaml
+- tapOn:
+    id: home-search
+- inputText: QA Kitchen
+- extendedWaitUntil:
+    visible:
+      id: restaurant-QA Kitchen
+    timeout: 15000
+# Server-side search filtered the other seeded restaurant out.
+- assertNotVisible:
+    id: restaurant-QA Night Cafe
+- tapOn:
+    id: restaurant-QA Kitchen
+- extendedWaitUntil:
+    visible: QA Burger
+    timeout: 15000
+- assertVisible: Mains
+- assertVisible: QA Pasta
+- assertVisible: '\$10\.00'
+- assertVisible: '\$12\.50'
+- assertVisible:
+    id: add-QA Burger
+# Lower sections are below the fold of the test viewport: scroll before asserting, so a
+# negative assertion can't pass just because the element is off-screen.
+- scrollUntilVisible:
+    element: QA Soup
+    direction: DOWN
+# Sold-out items render without an add button.
+- assertNotVisible:
+    id: add-QA Soup
+- scrollUntilVisible:
+    element: Drinks
+    direction: DOWN
+- assertVisible: QA Lemonade
