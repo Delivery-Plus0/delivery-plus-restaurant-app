@@ -16,7 +16,7 @@ Please report:
 - a request or screen that bypasses sign-in or relies on client-side ownership as authorization
 - unsafe rendering of server-provided content
 
-The backend is authoritative for role checks, ownership, and order transitions. Report server-side authorization issues to [the backend security policy](https://github.com/Yousefa7medmaher/delivery-plus/blob/dev/SECURITY.md) as well.
+The backend is authoritative for role checks, ownership, and order transitions. Report server-side authorization issues to [the backend security policy](https://github.com/Delivery-Plus0/delivery-plus/blob/dev/SECURITY.md) as well.
 
 The development gateway URL in `.env.example` and test-only QA credentials used against a local E2E stack are not production secrets.
 

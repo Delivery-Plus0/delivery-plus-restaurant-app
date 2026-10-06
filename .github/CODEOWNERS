@@ -1,8 +1,8 @@
 # Default owner for everything in the restaurant app.
-* @Yousefa7medmaher
+* @Delivery-Plus0/maintainers
 
 # Build, CI and E2E infrastructure.
-/.github/ @Yousefa7medmaher
-/e2e/ @Yousefa7medmaher
-/app.json @Yousefa7medmaher
-/SECURITY.md @Yousefa7medmaher
+/.github/ @Delivery-Plus0/maintainers
+/e2e/ @Delivery-Plus0/maintainers
+/app.json @Delivery-Plus0/maintainers
+/SECURITY.md @Delivery-Plus0/maintainers
