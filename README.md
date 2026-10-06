@@ -2,7 +2,7 @@
 
 The restaurant-owner client of **Delivery Plus**, a food-delivery platform. Owners see their kitchen's orders and move each paid order from *new* to *preparing* to *ready for pickup* (the backend then dispatches a driver automatically), and control whether the restaurant takes orders and which items are sold out.
 
-Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first (desktop and narrow browser widths), on the same foundation and design system as the [customer app](https://github.com/Yousefa7medmaher/delivery-plus-customer-app) and the [driver app](https://github.com/Yousefa7medmaher/delivery-plus-driver-app): API client, session handling, `useResource` cache and polling, UI kit and theme, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) (issue #100).
+Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first (desktop and narrow browser widths), on the same foundation and design system as the [customer app](https://github.com/Delivery-Plus0/delivery-plus-customer-app) and the [driver app](https://github.com/Delivery-Plus0/delivery-plus-driver-app): API client, session handling, `useResource` cache and polling, UI kit and theme, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (issue #100).
 
 ## Features (MVP)
 

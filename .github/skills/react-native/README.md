@@ -6,7 +6,7 @@ navigation code exist yet. It contains the guardrails Copilot should apply once 
 starts.
 
 Everything here is grounded in the real backend at the time of writing (repo
-`Yousefa7medmaher/delivery-plus`, branch `dev`, commit `afee937`). When the backend changes,
+`Delivery-Plus0/delivery-plus`, branch `dev`, commit `afee937`). When the backend changes,
 re-inspect it — do not assume these documents stay accurate forever. See each skill's
 "Verify before relying on this" note for what to re-check.
 

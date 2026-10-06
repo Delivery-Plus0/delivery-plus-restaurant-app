@@ -2,7 +2,7 @@
 
 ## Before changing the app
 
-Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) and [planning.md](planning.md). The backend repository at [Yousefa7medmaher/delivery-plus](https://github.com/Yousefa7medmaher/delivery-plus) is the source of truth for API behavior; verify routes and DTOs in its `docs/openapi/delivery-plus-public.json` and service docs before relying on them.
+Read [.project-context/00-INDEX.md](.project-context/00-INDEX.md) and [planning.md](planning.md). The backend repository at [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) is the source of truth for API behavior; verify routes and DTOs in its `docs/openapi/delivery-plus-public.json` and service docs before relying on them.
 
 ## Workflow
 

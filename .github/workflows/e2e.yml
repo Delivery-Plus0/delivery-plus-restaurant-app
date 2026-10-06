@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BACKEND_REPOSITORY: ${{ vars.BACKEND_REPOSITORY || 'Yousefa7medmaher/delivery-plus' }}
+  BACKEND_REPOSITORY: ${{ vars.BACKEND_REPOSITORY || 'Delivery-Plus0/delivery-plus' }}
   BACKEND_REF: ${{ vars.BACKEND_REF || 'dev' }}
   E2E_API_URL: http://localhost:3100
   E2E_MANIFEST: ${{ github.workspace }}/backend/e2e-seed-manifest.json
