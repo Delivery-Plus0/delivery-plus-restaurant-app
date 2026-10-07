@@ -1,4 +1,5 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api';
+import type { PresignedUpload } from '@/utils/image-upload';
 
 export type MenuCategory = {
   id: string;
@@ -16,6 +17,8 @@ export type MenuItem = {
   price: string | number;
   imageUrl?: string | null;
   available: boolean;
+  /** Ordered images (#149); the first is mirrored into imageUrl. */
+  images?: { id: string; url: string; position: number }[];
 };
 
 export type MenuResponse = {
@@ -69,4 +72,17 @@ export async function reorderCategories(restaurantId: string, categoryIds: strin
 
 function withoutNullCategory({ categoryId, ...rest }: MenuItemDraft) {
   return categoryId ? { ...rest, categoryId } : rest;
+}
+
+/** Item photos (#149): presign, upload straight to storage, confirm; remove by image id. */
+export async function createItemImageUploadUrl(itemId: string, contentType: string): Promise<PresignedUpload> {
+  return apiPost<PresignedUpload>(`/api/menus/menu-items/${encodeURIComponent(itemId)}/image-upload-url`, { contentType }, true);
+}
+
+export async function confirmItemImage(itemId: string, objectKey: string): Promise<MenuItem> {
+  return apiPost<MenuItem>(`/api/menus/menu-items/${encodeURIComponent(itemId)}/image-confirm`, { objectKey }, true);
+}
+
+export async function removeItemImage(itemId: string, imageId: string): Promise<MenuItem> {
+  return apiDelete<MenuItem>(`/api/menus/menu-items/${encodeURIComponent(itemId)}/images/${encodeURIComponent(imageId)}`, true);
 }

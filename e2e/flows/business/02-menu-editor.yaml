@@ -90,6 +90,48 @@ tags:
 - assertVisible: 'Saved E2E Basbousa'
 - assertVisible: '.*40\.50'
 
+# Photo (#149): none yet; one uploaded through the API (the picker can't be automated on web) shows
+# in the editor, and the editor's Remove clears it.
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-empty
+    timeout: 10000
+- assertVisible:
+    id: item-editor-photo-pick
+- assertVisible: 'Add photo'
+- tapOn:
+    id: item-editor-close
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/upload-photo
+# The upload happened behind the app's back, so reload the menu to see it (an upload from the
+# editor reloads it by itself).
+- openLink: ${APP_URL}/menu
+- extendedWaitUntil:
+    visible:
+      id: item-${output.control.itemId}-edit
+    timeout: 20000
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-image
+    timeout: 15000
+- assertVisible:
+    id: item-editor-photo-pick
+- assertVisible: 'Replace photo'
+- tapOn:
+    id: item-editor-photo-remove
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-empty
+    timeout: 15000
+- tapOn:
+    id: item-editor-close
+
 # Archive it, behind a confirmation: it leaves the menu.
 - tapOn:
     id: item-${output.control.itemId}-edit
