@@ -1,0 +1,67 @@
+url: ${APP_URL}
+name: Restaurant owner opens a new order, rejects it with a reason, and the customer is told why
+tags:
+  - business
+---
+# CUSTOMER (stand-in): a fresh order is placed and paid.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: scenario/order-confirmed
+- runFlow: ../_shared/login.yaml
+
+# The board shows today's numbers; the order's details open in a sheet.
+- extendedWaitUntil:
+    visible:
+      id: today-summary
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: order-${output.control.orderId}-details
+    timeout: 30000
+- tapOn:
+    id: order-${output.control.orderId}-details
+- extendedWaitUntil:
+    visible:
+      id: order-sheet
+    timeout: 10000
+- assertVisible:
+    id: order-sheet-customer
+- assertVisible:
+    id: order-sheet-driver
+- assertVisible:
+    id: order-sheet-status
+    text: Confirmed
+
+# Reject: a reason is required, then a preset reason goes to the customer.
+- tapOn:
+    id: order-sheet-reject
+- extendedWaitUntil:
+    visible:
+      id: reject-form
+    timeout: 10000
+- tapOn:
+    id: reject-confirm
+- extendedWaitUntil:
+    visible:
+      id: reject-error
+    timeout: 10000
+- tapOn:
+    id: reject-reason-0
+- tapOn:
+    id: reject-confirm
+- extendedWaitUntil:
+    visible:
+      id: board-notice
+    timeout: 15000
+- assertVisible: 'Order .* rejected. The customer has been told why.'
+- assertNotVisible:
+    id: order-sheet
+- assertNotVisible:
+    id: order-${output.control.orderId}-start-preparing
+
+# BACKEND (as the customer): cancelled by the restaurant with that reason, and notified.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: order/assert-rejected

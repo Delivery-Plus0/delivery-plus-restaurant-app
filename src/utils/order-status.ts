@@ -72,3 +72,22 @@ export function groupOrdersByLane(orders: RestaurantOrder[]) {
   }
   return { lanes, other: other.reverse() };
 }
+
+/** The owner can reject only a new order, before the kitchen starts on it (#154); the backend enforces the same. */
+export function canReject(status: RestaurantOrderStatus): boolean {
+  return status === 'CONFIRMED';
+}
+
+/** Matches the backend's limit on a cancellation reason. */
+export const REJECT_REASON_MAX = 200;
+
+export const REJECT_REASONS = ['An item is out of stock', 'The kitchen is too busy', 'We are closing soon'];
+
+/**
+ * The area part of a drop-off address for the kitchen: the address without its first line (street and
+ * building). Null when the address has no separate area, so the kitchen never sees the full address.
+ */
+export function dropOffArea(address: string | null | undefined): string | null {
+  const parts = (address ?? '').split(',').map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? parts.slice(1).join(', ') : null;
+}

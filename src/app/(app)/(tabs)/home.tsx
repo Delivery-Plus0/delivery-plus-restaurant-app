@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { OrderDetailSheet } from '@/components/order-detail-sheet';
 import { RestaurantOrderCard } from '@/components/restaurant-order-card';
 import { RestaurantPicker } from '@/components/restaurant-picker';
 import { ThemedText } from '@/components/themed-text';
@@ -14,12 +15,13 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
-import type { KitchenStatus, RestaurantOrder } from '@/services/restaurant-orders';
+import type { KitchenStatus, RestaurantOrder, TodaySummary } from '@/services/restaurant-orders';
 import type { Restaurant } from '@/services/restaurants';
 import { clearSession, useAuthSession } from '@/services/session';
-import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant } from '@/state/restaurant';
+import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant, useTodaySummary } from '@/state/restaurant';
 import { confirm } from '@/utils/confirm';
-import { groupOrdersByLane, KITCHEN_LANES, RESTAURANT_STATUS_META } from '@/utils/order-status';
+import { formatMoney, shortId } from '@/utils/format';
+import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
 
 /** Three lanes side by side from here; two below it; one on phones. */
 const WIDE = 1024;
@@ -32,7 +34,10 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const { restaurants, restaurant } = useSelectedRestaurant();
   const orders = useRestaurantOrders(restaurant?.id ?? null);
+  const today = useTodaySummary(restaurant?.id ?? null);
   const [showOther, setShowOther] = useState(false);
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function signOut() {
     const ok = await confirm({ title: 'Sign out?', message: 'You can sign back in at any time.', confirmLabel: 'Sign out' });
@@ -40,11 +45,13 @@ export default function HomeScreen() {
   }
 
   async function refreshAll() {
-    await Promise.all([restaurants.refresh(), restaurant ? orders.refresh() : Promise.resolve()]);
+    await Promise.all([restaurants.refresh(), restaurant ? orders.refresh() : Promise.resolve(), restaurant ? today.refresh() : Promise.resolve()]);
   }
 
   const columns = width >= WIDE ? 3 : width >= MEDIUM ? 2 : 1;
   const { lanes, other } = groupOrdersByLane(orders.data?.items ?? []);
+  // Read from the latest board data, so the sheet follows the order as it moves.
+  const openOrder = orders.data?.items.find((order) => order.id === openOrderId) ?? null;
 
   return (
     <Screen>
@@ -74,6 +81,7 @@ export default function HomeScreen() {
             <RestaurantCard
               restaurant={restaurant}
               counts={KITCHEN_LANES.map((lane) => ({ label: lane.title, value: lanes[lane.status].length }))}
+              today={today.data}
             />
 
             <View style={styles.boardHeader}>
@@ -104,13 +112,22 @@ export default function HomeScreen() {
             ) : (
               <>
                 {orders.error ? <InlineAlert message="Couldn't refresh the orders. Showing the last ones loaded." testID="orders-stale" /> : null}
+                {notice ? <InlineAlert tone="success" message={notice} onDismiss={() => setNotice(null)} testID="board-notice" /> : null}
                 <View style={styles.board}>
                   {KITCHEN_LANES.map((lane) => (
                     <View key={lane.status} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
                       <LaneHeader title={lane.title} note={lane.note} count={lanes[lane.status].length} testID={`lane-${lane.status}`} />
                       {lanes[lane.status].length ? (
                         // Keyed by status too: a newer server state starts the card fresh, dropping an earlier error.
-                        lanes[lane.status].map((order) => <KitchenOrder key={`${order.id}:${order.status}`} restaurantId={restaurant.id} order={order} />)
+                        lanes[lane.status].map((order) => (
+                          <KitchenOrder
+                            key={`${order.id}:${order.status}`}
+                            restaurantId={restaurant.id}
+                            order={order}
+                            onOpen={() => setOpenOrderId(order.id)}
+                            onDone={setNotice}
+                          />
+                        ))
                       ) : (
                         <View style={styles.emptyLane}>
                           <ThemedText type="small" themeColor="textSecondary">
@@ -136,7 +153,7 @@ export default function HomeScreen() {
                       <View style={[styles.board, styles.otherList]}>
                         {other.map((order) => (
                           <View key={order.id} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
-                            <RestaurantOrderCard order={order} />
+                            <RestaurantOrderCard order={order} onOpen={() => setOpenOrderId(order.id)} />
                           </View>
                         ))}
                       </View>
@@ -148,11 +165,22 @@ export default function HomeScreen() {
           </>
         )}
       </ScrollView>
+      {restaurant ? (
+        <OrderDetailSheet
+          restaurantId={restaurant.id}
+          order={openOrder}
+          onClose={() => setOpenOrderId(null)}
+          onRejected={(message) => {
+            setOpenOrderId(null);
+            setNotice(message);
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }
 
-function RestaurantCard({ restaurant, counts }: { restaurant: Restaurant; counts: { label: string; value: number }[] }) {
+function RestaurantCard({ restaurant, counts, today }: { restaurant: Restaurant; counts: { label: string; value: number }[]; today?: TodaySummary }) {
   const status = RESTAURANT_STATUS_META[restaurant.status];
   return (
     <Card testID="restaurant-heading">
@@ -182,6 +210,18 @@ function RestaurantCard({ restaurant, counts }: { restaurant: Restaurant; counts
           </View>
         ))}
       </View>
+      {/* Today in Cairo, from the backend (#154): item revenue only, without delivery fees or cancelled orders. */}
+      <View style={styles.today} testID="today-summary" nativeID="today-summary">
+        <ThemedText type="caption" themeColor="textSecondary" style={styles.flex}>
+          Today
+        </ThemedText>
+        <ThemedText type="smallBold" testID="today-orders">
+          {today ? `${today.orders} ${today.orders === 1 ? 'order' : 'orders'}` : '…'}
+        </ThemedText>
+        <ThemedText type="smallBold" style={styles.countValue} testID="today-revenue">
+          {today ? formatMoney(today.revenue) : ''}
+        </ThemedText>
+      </View>
     </Card>
   );
 }
@@ -203,7 +243,17 @@ function LaneHeader({ title, note, count, testID }: { title: string; note: strin
 }
 
 /** An order card with its one kitchen action; the board refreshes from the server after each step. */
-function KitchenOrder({ restaurantId, order }: { restaurantId: string; order: RestaurantOrder }) {
+function KitchenOrder({
+  restaurantId,
+  order,
+  onOpen,
+  onDone,
+}: {
+  restaurantId: string;
+  order: RestaurantOrder;
+  onOpen: () => void;
+  onDone: (message: string) => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [isActing, setIsActing] = useState(false);
   const inFlight = useRef(false);
@@ -215,6 +265,7 @@ function KitchenOrder({ restaurantId, order }: { restaurantId: string; order: Re
     setError(null);
     try {
       await advanceOrder(restaurantId, order.id, status);
+      onDone(`Order ${shortId(order.id)} is now ${ORDER_STATUS_META[status].label}.`);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'That did not go through. Check your connection and try again.');
     } finally {
@@ -223,7 +274,7 @@ function KitchenOrder({ restaurantId, order }: { restaurantId: string; order: Re
     }
   }
 
-  return <RestaurantOrderCard order={order} busy={isActing} error={error} onAction={(status) => void act(status)} />;
+  return <RestaurantOrderCard order={order} busy={isActing} error={error} onAction={(status) => void act(status)} onOpen={onOpen} />;
 }
 
 const styles = StyleSheet.create({
@@ -262,6 +313,15 @@ const styles = StyleSheet.create({
   },
   countValue: {
     fontVariant: ['tabular-nums'],
+  },
+  today: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    marginTop: Spacing.three,
+    paddingTop: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: BrandColors.divider,
   },
   boardHeader: {
     flexDirection: 'row',
