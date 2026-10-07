@@ -100,7 +100,7 @@ tags:
     timeout: 10000
 - assertVisible:
     id: item-editor-photo-pick
-    text: Add photo
+- assertVisible: 'Add photo'
 - tapOn:
     id: item-editor-close
 - runScript:
@@ -115,7 +115,7 @@ tags:
     timeout: 15000
 - assertVisible:
     id: item-editor-photo-pick
-    text: Replace photo
+- assertVisible: 'Replace photo'
 - tapOn:
     id: item-editor-photo-remove
 - extendedWaitUntil:
