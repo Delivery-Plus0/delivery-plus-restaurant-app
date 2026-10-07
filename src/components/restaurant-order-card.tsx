@@ -50,10 +50,11 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error }: Re
         ))}
         <View style={styles.itemRow}>
           <ThemedText type="smallBold" style={styles.itemName}>
-            Total
+            Items total
           </ThemedText>
+          {/* The restaurant's amount is the items; the delivery fee in totalAmount isn't theirs (#145). */}
           <ThemedText type="smallBold" style={styles.price} testID={`order-${order.id}-total`}>
-            {formatMoney(order.totalAmount)}
+            {formatMoney(order.subtotalAmount ?? order.totalAmount)}
           </ThemedText>
         </View>
       </View>
