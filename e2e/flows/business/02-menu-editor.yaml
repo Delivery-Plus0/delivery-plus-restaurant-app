@@ -1,0 +1,130 @@
+url: ${APP_URL}
+name: Menu editor - the owner adds a category and an item, edits the price, archives the item, deletes the empty category
+tags:
+  - business
+---
+# Fixture: nothing left over from an earlier, interrupted run.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/cleanup
+- runFlow: ../_shared/login.yaml
+- openLink: ${APP_URL}/menu
+- extendedWaitUntil:
+    visible:
+      id: menu-add-category
+    timeout: 20000
+
+# A new category.
+- tapOn:
+    id: menu-add-category
+- extendedWaitUntil:
+    visible:
+      id: category-editor
+    timeout: 10000
+- tapOn:
+    id: category-editor-name
+- inputText: E2E Desserts
+- tapOn:
+    id: category-editor-save
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+      text: 'Added the E2E Desserts category'
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/find
+- assertVisible:
+    id: menu-section-${output.control.categoryId}-empty
+
+# A new item in it; validation first (no price), then a real one.
+- tapOn:
+    id: category-${output.control.categoryId}-add-item
+- extendedWaitUntil:
+    visible:
+      id: item-editor
+    timeout: 10000
+- tapOn:
+    id: item-editor-name
+- inputText: E2E Basbousa
+- tapOn:
+    id: item-editor-save
+- assertVisible: 'Enter a price in EGP, e\.g\. 45 or 45\.50'
+- tapOn:
+    id: item-editor-price
+- inputText: '35'
+- tapOn:
+    id: item-editor-save
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+      text: 'Added E2E Basbousa to the menu'
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/find
+- assertVisible:
+    id: item-${output.control.itemId}
+
+# Edit the price.
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-price
+    timeout: 10000
+- tapOn:
+    id: item-editor-price
+- eraseText: 10
+- inputText: '40.50'
+- tapOn:
+    id: item-editor-save
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+      text: 'Saved E2E Basbousa'
+    timeout: 15000
+- assertVisible: '.*40\.50'
+
+# Archive it, behind a confirmation: it leaves the menu.
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-archive
+    timeout: 10000
+- tapOn:
+    id: item-editor-archive
+- extendedWaitUntil:
+    visible:
+      id: archive-dialog
+    timeout: 10000
+- tapOn:
+    id: archive-dialog-confirm
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+      text: 'Archived E2E Basbousa'
+    timeout: 15000
+- assertNotVisible:
+    id: item-${output.control.itemId}
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/assert-archived
+
+# The category is empty again, so it can be deleted.
+- tapOn:
+    id: category-${output.control.categoryId}-delete
+- tapOn:
+    id: category-delete-dialog-confirm
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+      text: 'Deleted the E2E Desserts category'
+    timeout: 15000
+- assertNotVisible:
+    id: menu-section-${output.control.categoryId}

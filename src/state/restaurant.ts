@@ -79,6 +79,11 @@ export async function setItemAvailability(restaurantId: string, itemId: string, 
   }
 }
 
+/** Refetches the menu after an editor write (#148); menu-service drops its cache on every write. */
+export async function reloadMenu(restaurantId: string): Promise<void> {
+  await fetchResource(menuKey(restaurantId), () => fetchMenu(restaurantId));
+}
+
 /** Opens, pauses or closes the restaurant and updates the owner's restaurant list with the result. */
 export async function setRestaurantStatus(restaurantId: string, status: OwnerRestaurantStatus): Promise<void> {
   const updated = await updateRestaurantStatus(restaurantId, status);
