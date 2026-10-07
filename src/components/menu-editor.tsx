@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   photo: {
-    width: '100%',
-    aspectRatio: 4 / 3,
+    width: 160,
+    height: 120,
     borderRadius: Radius.md,
     backgroundColor: BrandColors.surfaceMuted,
   },
