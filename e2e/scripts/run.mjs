@@ -40,7 +40,7 @@ const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
   smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml'],
-  business: ['business/01-kitchen-lifecycle.yaml'],
+  business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
@@ -180,7 +180,37 @@ function resetRateLimits() {
   );
 }
 
+/** The menu editor flow's own names (#148), so it can find what it created and clean up after itself. */
+const EDITOR_CATEGORY = 'E2E Desserts';
+const EDITOR_ITEM = 'E2E Basbousa';
+
 const actions = {
+  // Fixture (#148): archive what an earlier, interrupted editor run left behind, then drop its category.
+  'menu/cleanup': async () => {
+    const owner = await login(manifest.accounts.restaurant.email);
+    const kitchen = manifest.restaurants['QA Kitchen'];
+    const menu = await api('GET', `/api/menus/restaurants/${kitchen}/menu`);
+    for (const item of menu.items.filter((i) => i.name === EDITOR_ITEM)) await api('DELETE', `/api/menus/menu-items/${item.id}`, owner);
+    for (const category of menu.categories.filter((c) => c.name === EDITOR_CATEGORY)) await api('DELETE', `/api/menus/categories/${category.id}`, owner);
+  },
+  // Read-only: the ids of what the editor flow created, so the flow can address its rows.
+  'menu/find': async () => {
+    const menu = await api('GET', `/api/menus/restaurants/${manifest.restaurants['QA Kitchen']}/menu`);
+    state.categoryId = menu.categories.find((c) => c.name === EDITOR_CATEGORY)?.id ?? null;
+    state.itemId = menu.items.find((i) => i.name === EDITOR_ITEM)?.id ?? state.itemId ?? null;
+  },
+  // Verification (as a customer would see it): the archived item is off the public menu, the menu
+  // item itself is archived and unavailable, and a cart refuses it.
+  'menu/assert-archived': async () => {
+    const menu = await api('GET', `/api/menus/restaurants/${manifest.restaurants['QA Kitchen']}/menu`);
+    if (menu.items.some((i) => i.id === state.itemId)) throw new Error(`Archived item ${state.itemId} is still on the public menu`);
+    const item = await api('GET', `/api/menus/menu-items/${state.itemId}`);
+    if (!item.archivedAt || item.available !== false) throw new Error(`Item ${state.itemId} is not archived: ${JSON.stringify(item)}`);
+    const customer = await login(manifest.accounts.customer.email);
+    const added = await api('POST', '/api/cart/items', customer, { menuItemId: state.itemId, quantity: 1 }).then(() => true, () => false);
+    if (added) throw new Error('A customer could add the archived item to their cart');
+  },
+
   // CUSTOMER stand-in (the customer app covers this in its own suite): the QA customer orders and
   // pays, so a fresh CONFIRMED order reaches the restaurant board. Never reuses seeded orders.
   'scenario/order-confirmed': async () => {
@@ -231,7 +261,7 @@ const control = createServer(async (req, res) => {
   try {
     if (req.method !== 'POST' || !actions[action]) throw Object.assign(new Error(`Unknown action ${action}`), { code: 404 });
     await actions[action]();
-    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ action, orderId: state.orderId }));
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ action, ...state }));
   } catch (error) {
     console.error(`[control] ${action} failed:`, error.message);
     res.writeHead(error.code ?? 500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: error.message }));

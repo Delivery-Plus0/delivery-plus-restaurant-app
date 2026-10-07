@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from '@/services/api';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api';
 
 export type MenuCategory = {
   id: string;
@@ -32,4 +32,41 @@ export async function fetchMenu(restaurantId: string): Promise<MenuResponse> {
 /** Marks an item available or sold out. Owner role + ownership of the item's restaurant checked by menu-service. */
 export async function setMenuItemAvailability(itemId: string, available: boolean): Promise<MenuItem> {
   return apiPatch<MenuItem>(`/api/menus/menu-items/${encodeURIComponent(itemId)}/availability`, { available }, true);
+}
+
+/** Menu editor (#148). Every write is owner-only and checked against restaurant ownership by menu-service. */
+export type MenuItemDraft = { name: string; description?: string; price: number; categoryId?: string | null };
+
+export async function createMenuItem(restaurantId: string, draft: MenuItemDraft): Promise<MenuItem> {
+  return apiPost<MenuItem>('/api/menus/menu-items', { restaurantId, ...withoutNullCategory(draft) }, true);
+}
+
+export async function updateMenuItem(itemId: string, draft: MenuItemDraft): Promise<MenuItem> {
+  return apiPatch<MenuItem>(`/api/menus/menu-items/${encodeURIComponent(itemId)}`, withoutNullCategory(draft), true);
+}
+
+/** DELETE archives on the backend: the item leaves the menu but past orders keep it. */
+export async function archiveMenuItem(itemId: string): Promise<MenuItem> {
+  return apiDelete<MenuItem>(`/api/menus/menu-items/${encodeURIComponent(itemId)}`, true);
+}
+
+export async function createCategory(restaurantId: string, name: string, displayOrder: number): Promise<MenuCategory> {
+  return apiPost<MenuCategory>('/api/menus/categories', { restaurantId, name, displayOrder }, true);
+}
+
+export async function renameCategory(categoryId: string, name: string): Promise<MenuCategory> {
+  return apiPatch<MenuCategory>(`/api/menus/categories/${encodeURIComponent(categoryId)}`, { name }, true);
+}
+
+/** Only an empty category can be deleted (the backend answers 409 otherwise). */
+export async function deleteCategory(categoryId: string): Promise<void> {
+  await apiDelete(`/api/menus/categories/${encodeURIComponent(categoryId)}`, true);
+}
+
+export async function reorderCategories(restaurantId: string, categoryIds: string[]): Promise<MenuCategory[]> {
+  return apiPatch<MenuCategory[]>(`/api/menus/restaurants/${encodeURIComponent(restaurantId)}/categories/order`, { categoryIds }, true);
+}
+
+function withoutNullCategory({ categoryId, ...rest }: MenuItemDraft) {
+  return categoryId ? { ...rest, categoryId } : rest;
 }
