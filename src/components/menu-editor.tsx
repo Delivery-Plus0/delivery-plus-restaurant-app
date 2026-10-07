@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,7 +10,19 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { Sheet } from '@/components/ui/sheet';
 import { BrandColors, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
-import { archiveMenuItem, createMenuItem, renameCategory, createCategory, updateMenuItem, type MenuCategory, type MenuItem } from '@/services/menus';
+import {
+  archiveMenuItem,
+  confirmItemImage,
+  createCategory,
+  createItemImageUploadUrl,
+  createMenuItem,
+  removeItemImage,
+  renameCategory,
+  updateMenuItem,
+  type MenuCategory,
+  type MenuItem,
+} from '@/services/menus';
+import { pickImage, uploadToPresigned } from '@/utils/image-upload';
 import { reloadMenu } from '@/state/restaurant';
 import { DESCRIPTION_MAX, NAME_MAX, draftFromItem, parsePrice, sortCategories, validateItemDraft, type ItemDraftInput } from '@/utils/menu-editor';
 
@@ -130,6 +143,11 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
           </View>
         </View>
       ) : null}
+      {item ? <ItemPhoto restaurantId={restaurantId} item={item} /> : (
+        <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-hint">
+          Save the item first, then add a photo.
+        </ThemedText>
+      )}
       {error ? <InlineAlert message={error} testID="item-editor-error" /> : null}
       <AppButton testID="item-editor-save" title={item ? 'Save changes' : 'Add to menu'} loading={saving} onPress={() => void save()} />
       {item ? (
@@ -146,6 +164,86 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
         testID="archive-dialog"
       />
     </Sheet>
+  );
+}
+
+/**
+ * The item's photo (#149): add, replace (upload the new one, then remove the old) or remove. The
+ * menu shows the first image; uploads go straight to storage with the backend's presigned policy.
+ */
+function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuItem }) {
+  const [current, setCurrent] = useState(item.images ?? []);
+  const [busy, setBusy] = useState<'uploading' | 'removing' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const primary = current[0] ?? null;
+
+  async function change() {
+    if (busy) return;
+    setError(null);
+    try {
+      const picked = await pickImage('library');
+      if (!picked) return;
+      setBusy('uploading');
+      const presigned = await createItemImageUploadUrl(item.id, picked.mimeType);
+      await uploadToPresigned(presigned, picked);
+      let updated = await confirmItemImage(item.id, presigned.objectKey);
+      // Replace: the new image is appended, so dropping the old primary promotes it.
+      if (primary) updated = await removeItemImage(item.id, primary.id);
+      setCurrent(updated.images ?? []);
+      await reloadMenu(restaurantId);
+    } catch (caught) {
+      setError(errorMessage(caught, caught instanceof Error ? caught.message : 'Could not upload this photo.'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove() {
+    if (!primary || busy) return;
+    setBusy('removing');
+    setError(null);
+    try {
+      const updated = await removeItemImage(item.id, primary.id);
+      setCurrent(updated.images ?? []);
+      await reloadMenu(restaurantId);
+    } catch (caught) {
+      setError(errorMessage(caught, 'Could not remove this photo.'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <View style={styles.field} testID="item-editor-photo" nativeID="item-editor-photo">
+      <ThemedText type="smallBold">Photo</ThemedText>
+      {primary ? (
+        <Image source={{ uri: primary.url }} style={styles.photo} contentFit="cover" accessibilityLabel={`Photo of ${item.name}`} testID="item-editor-photo-image" />
+      ) : (
+        <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-empty">
+          No photo yet. Customers see a placeholder.
+        </ThemedText>
+      )}
+      {busy ? (
+        <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-status">
+          {busy === 'uploading' ? 'Uploading…' : 'Removing…'}
+        </ThemedText>
+      ) : null}
+      {error ? <InlineAlert message={error} testID="item-editor-photo-error" /> : null}
+      <View style={styles.photoActions}>
+        <AppButton
+          testID="item-editor-photo-pick"
+          title={primary ? 'Replace photo' : 'Add photo'}
+          variant="secondary"
+          size="sm"
+          loading={busy === 'uploading'}
+          disabled={busy !== null}
+          onPress={() => void change()}
+        />
+        {primary ? (
+          <AppButton testID="item-editor-photo-remove" title="Remove photo" variant="ghost" size="sm" disabled={busy !== null} onPress={() => void remove()} />
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -202,6 +300,17 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
 
 const styles = StyleSheet.create({
   field: {
+    gap: Spacing.two,
+  },
+  photo: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: Radius.md,
+    backgroundColor: BrandColors.surfaceMuted,
+  },
+  photoActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   chips: {

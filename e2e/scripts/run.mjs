@@ -199,6 +199,20 @@ const actions = {
     state.categoryId = menu.categories.find((c) => c.name === EDITOR_CATEGORY)?.id ?? null;
     state.itemId = menu.items.find((i) => i.name === EDITOR_ITEM)?.id ?? state.itemId ?? null;
   },
+  // Stand-in for the file picker (#149), which Maestro web can't drive: upload a real 1×1 PNG to the
+  // item through the same presign → storage → confirm API the app uses.
+  'menu/upload-photo': async () => {
+    const owner = await login(manifest.accounts.restaurant.email);
+    const presigned = await api('POST', `/api/menus/menu-items/${state.itemId}/image-upload-url`, owner, { contentType: 'image/png' });
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    const form = new FormData();
+    for (const [key, value] of Object.entries(presigned.fields)) form.append(key, value);
+    form.append('file', new Blob([png], { type: 'image/png' }), 'e2e.png');
+    const upload = await fetch(presigned.uploadUrl, { method: 'POST', body: form });
+    if (!upload.ok) throw new Error(`Storage upload failed: ${upload.status} ${await upload.text()}`);
+    const item = await api('POST', `/api/menus/menu-items/${state.itemId}/image-confirm`, owner, { objectKey: presigned.objectKey });
+    if (!item.imageUrl || item.images?.length !== 1) throw new Error(`Photo not attached: ${JSON.stringify(item)}`);
+  },
   // Verification (as a customer would see it): the archived item is off the public menu, the menu
   // item itself is archived and unavailable, and a cart refuses it.
   'menu/assert-archived': async () => {

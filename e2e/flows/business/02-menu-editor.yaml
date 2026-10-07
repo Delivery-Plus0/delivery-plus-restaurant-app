@@ -90,6 +90,41 @@ tags:
 - assertVisible: 'Saved E2E Basbousa'
 - assertVisible: '.*40\.50'
 
+# Photo (#149): none yet; one uploaded through the API (the picker can't be automated on web) shows
+# in the editor, and the editor's Remove clears it.
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-empty
+    timeout: 10000
+- assertVisible:
+    id: item-editor-photo-pick
+    text: Add photo
+- tapOn:
+    id: item-editor-close
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: menu/upload-photo
+- tapOn:
+    id: item-${output.control.itemId}-edit
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-image
+    timeout: 15000
+- assertVisible:
+    id: item-editor-photo-pick
+    text: Replace photo
+- tapOn:
+    id: item-editor-photo-remove
+- extendedWaitUntil:
+    visible:
+      id: item-editor-photo-empty
+    timeout: 15000
+- tapOn:
+    id: item-editor-close
+
 # Archive it, behind a confirmation: it leaves the menu.
 - tapOn:
     id: item-${output.control.itemId}-edit
