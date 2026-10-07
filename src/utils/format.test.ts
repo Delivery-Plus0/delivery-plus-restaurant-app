@@ -6,9 +6,11 @@ vi.mock('@/hooks/use-resource', () => ({ useResource: vi.fn() }));
 
 describe('formatMoney', () => {
   it('formats decimal strings from TypeORM and plain numbers the same way', () => {
-    expect(formatMoney('12.5')).toBe('$12.50');
-    expect(formatMoney(12.5)).toBe('$12.50');
-    expect(formatMoney(undefined)).toBe('$0.00');
+    expect(formatMoney('12.5')).toBe('EGP\u00a012.50');
+    expect(formatMoney(12.5)).toBe('EGP\u00a012.50');
+    expect(formatMoney(undefined)).toBe('EGP\u00a00.00');
+    expect(formatMoney('1234.5')).toBe('EGP\u00a01,234.50');
+    expect(formatMoney('19.98', 'ar')).toBe('١٩٫٩٨\u00a0ج.م.');
   });
 });
 
