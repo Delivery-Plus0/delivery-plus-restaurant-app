@@ -16,9 +16,11 @@ type RestaurantOrderCardProps = {
   onAction?: (status: KitchenStatus) => void;
   busy?: boolean;
   error?: string | null;
+  /** Opens the order detail sheet (#154). */
+  onOpen?: () => void;
 };
 
-export function RestaurantOrderCard({ order, onAction, busy = false, error }: RestaurantOrderCardProps) {
+export function RestaurantOrderCard({ order, onAction, busy = false, error, onOpen }: RestaurantOrderCardProps) {
   const next = onAction ? nextKitchenStatus(order.status) : null;
   const status = ORDER_STATUS_META[order.status];
 
@@ -27,8 +29,8 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error }: Re
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="defaultBold">Order {shortId(order.id)}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {formatRelativeTime(order.createdAt)}
+          <ThemedText type="small" themeColor="textSecondary" testID={`order-${order.id}-meta`}>
+            {[order.customerFirstName, formatRelativeTime(order.createdAt)].filter(Boolean).join(' · ')}
           </ThemedText>
         </View>
         <Badge label={status.label} tone={status.tone} testID={`order-${order.id}-status`} />
@@ -60,16 +62,23 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error }: Re
       </View>
 
       {error ? <InlineAlert message={error} testID={`order-${order.id}-error`} /> : null}
-      {next && onAction ? (
-        <AppButton
-          testID={`order-${order.id}-${KITCHEN_ACTIONS[next].id}`}
-          title={KITCHEN_ACTIONS[next].label}
-          size="sm"
-          loading={busy}
-          onPress={() => onAction(next)}
-          accessibilityHint={`Moves this order to ${ORDER_STATUS_META[next].label}.`}
-        />
-      ) : null}
+      <View style={styles.actions}>
+        {onOpen ? (
+          <AppButton testID={`order-${order.id}-details`} title="Details" variant="secondary" size="sm" fullWidth={false} onPress={onOpen} />
+        ) : null}
+        {next && onAction ? (
+          <View style={styles.primaryAction}>
+            <AppButton
+              testID={`order-${order.id}-${KITCHEN_ACTIONS[next].id}`}
+              title={KITCHEN_ACTIONS[next].label}
+              size="sm"
+              loading={busy}
+              onPress={() => onAction(next)}
+              accessibilityHint={`Moves this order to ${ORDER_STATUS_META[next].label}.`}
+            />
+          </View>
+        ) : null}
+      </View>
     </Card>
   );
 }
@@ -104,5 +113,12 @@ const styles = StyleSheet.create({
   },
   price: {
     fontVariant: ['tabular-nums'],
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  primaryAction: {
+    flex: 1,
   },
 });

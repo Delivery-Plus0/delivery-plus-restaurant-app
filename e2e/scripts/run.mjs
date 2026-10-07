@@ -40,7 +40,7 @@ const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
   smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml'],
-  business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml'],
+  business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml', 'business/03-reject-order.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
@@ -236,6 +236,24 @@ const actions = {
     await api('POST', `/api/payments/${payment.id}/process`, customer, { simulateFailure: false });
     await waitForOrderStatus(order.id, customer, ['CONFIRMED']);
     state.orderId = order.id;
+  },
+  // Verification (as the customer, #154): the kitchen's rejection cancelled the order with the
+  // owner's reason, and the customer got an ORDER_CANCELLED notification carrying it.
+  'order/assert-rejected': async () => {
+    const customer = await login(manifest.accounts.customer.email);
+    const order = await waitForOrderStatus(state.orderId, customer, ['CANCELLED']);
+    const reason = 'An item is out of stock';
+    if (order.cancelledBy !== 'RESTAURANT' || !order.cancellationReason?.includes(reason)) {
+      throw new Error(`Order ${state.orderId} was not rejected by the kitchen: ${JSON.stringify({ by: order.cancelledBy, reason: order.cancellationReason })}`);
+    }
+    const deadline = Date.now() + 20_000;
+    for (;;) {
+      const notes = await api('GET', '/api/notifications?limit=50', customer);
+      const items = notes.items ?? notes;
+      if (items.some((note) => note.type === 'ORDER_CANCELLED' && note.message?.includes(reason))) return;
+      if (Date.now() > deadline) throw new Error(`The customer was not notified about the rejection of ${state.orderId}`);
+      await sleep(1_000);
+    }
   },
   // Fixture: no driver free, so a ready order stays READY_FOR_PICKUP (waiting) while the flow checks
   // the board. Restored after the suite by restoreSeedDriverState.

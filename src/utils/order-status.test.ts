@@ -4,7 +4,7 @@ import type { RestaurantOrder } from '@/services/restaurant-orders';
 
 import type { Restaurant } from '@/services/restaurants';
 
-import { groupOrdersByLane, nextKitchenStatus, selectRestaurant } from './order-status';
+import { canReject, dropOffArea, groupOrdersByLane, nextKitchenStatus, selectRestaurant } from './order-status';
 
 const restaurant = (id: string, status: Restaurant['status']): Restaurant => ({ id, name: id, address: 'x', status });
 
@@ -61,5 +61,27 @@ describe('groupOrdersByLane', () => {
     expect(lanes.PREPARING.map((o) => o.id)).toEqual(['cooking']);
     expect(lanes.READY_FOR_PICKUP.map((o) => o.id)).toEqual(['ready']);
     expect(other.map((o) => o.id)).toEqual(['done-new', 'unpaid', 'done-old']);
+  });
+});
+
+describe('canReject', () => {
+  it('allows rejecting only a new order, before preparing', () => {
+    expect(canReject('CONFIRMED')).toBe(true);
+    expect(canReject('PREPARING')).toBe(false);
+    expect(canReject('READY_FOR_PICKUP')).toBe(false);
+    expect(canReject('DELIVERED')).toBe(false);
+  });
+});
+
+describe('dropOffArea', () => {
+  it('drops the street line and keeps the area', () => {
+    expect(dropOffArea('12 Tahrir St, Apt 4, Dokki, Giza')).toBe('Apt 4, Dokki, Giza');
+    expect(dropOffArea(' 5 Nile St ,  Zamalek ')).toBe('Zamalek');
+  });
+
+  it('shows nothing rather than a full single-line address', () => {
+    expect(dropOffArea('12 Tahrir Street')).toBeNull();
+    expect(dropOffArea(null)).toBeNull();
+    expect(dropOffArea('')).toBeNull();
   });
 });

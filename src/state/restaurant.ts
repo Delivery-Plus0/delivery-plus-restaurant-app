@@ -2,7 +2,17 @@ import { useSyncExternalStore } from 'react';
 
 import { useResource } from '@/hooks/use-resource';
 import { fetchMenu, setMenuItemAvailability, type MenuResponse } from '@/services/menus';
-import { fetchRestaurantOrders, updateRestaurantOrderStatus, type KitchenStatus, type RestaurantOrderPage } from '@/services/restaurant-orders';
+import {
+  fetchOrderDriver,
+  fetchRestaurantOrders,
+  fetchTodaySummary,
+  rejectRestaurantOrder,
+  updateRestaurantOrderStatus,
+  type KitchenStatus,
+  type OrderDriver,
+  type RestaurantOrderPage,
+  type TodaySummary,
+} from '@/services/restaurant-orders';
 import { fetchMyRestaurants, updateRestaurantStatus, type OwnerRestaurantStatus, type Restaurant } from '@/services/restaurants';
 import { fetchResource, getResource, setResourceData } from '@/state/resource-cache';
 import { selectRestaurant } from '@/utils/order-status';
@@ -10,6 +20,7 @@ import { selectRestaurant } from '@/utils/order-status';
 const RESTAURANTS_KEY = 'restaurants:me';
 const ordersKey = (restaurantId: string) => `restaurant-orders:${restaurantId}`;
 const menuKey = (restaurantId: string) => `menu:${restaurantId}`;
+const summaryKey = (restaurantId: string) => `orders:summary:${restaurantId}`;
 
 /** New paid orders show up within this time; there is no push channel yet. */
 export const ORDERS_POLL_MS = 10_000;
@@ -54,6 +65,31 @@ export function useRestaurantOrders(restaurantId: string | null) {
 export async function advanceOrder(restaurantId: string, orderId: string, status: KitchenStatus): Promise<void> {
   await updateRestaurantOrderStatus(orderId, status);
   await fetchResource(ordersKey(restaurantId), () => fetchRestaurantOrders(restaurantId));
+}
+
+/** Rejects a new order with a reason (#154), then refreshes the board and today's numbers. */
+export async function rejectOrder(restaurantId: string, orderId: string, reason: string): Promise<void> {
+  await rejectRestaurantOrder(orderId, reason);
+  await Promise.all([
+    fetchResource(ordersKey(restaurantId), () => fetchRestaurantOrders(restaurantId)),
+    fetchResource(summaryKey(restaurantId), () => fetchTodaySummary(restaurantId)).catch(() => undefined),
+  ]);
+}
+
+/** The driver assigned to an order (#154), or null until dispatch finds one. */
+export function useOrderDriver(orderId: string | null) {
+  return useResource<OrderDriver | null>(orderId ? `order-driver:${orderId}` : null, () => fetchOrderDriver(orderId as string), {
+    staleTimeMs: 10_000,
+    pollIntervalMs: ORDERS_POLL_MS,
+  });
+}
+
+/** Today's orders and item revenue (#154), refreshed with the board. */
+export function useTodaySummary(restaurantId: string | null) {
+  return useResource<TodaySummary>(restaurantId ? summaryKey(restaurantId) : null, () => fetchTodaySummary(restaurantId as string), {
+    staleTimeMs: 5_000,
+    pollIntervalMs: ORDERS_POLL_MS,
+  });
 }
 
 /** The restaurant's menu, including sold-out items. */
