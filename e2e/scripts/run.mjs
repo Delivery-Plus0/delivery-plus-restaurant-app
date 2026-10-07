@@ -261,7 +261,7 @@ const control = createServer(async (req, res) => {
   try {
     if (req.method !== 'POST' || !actions[action]) throw Object.assign(new Error(`Unknown action ${action}`), { code: 404 });
     await actions[action]();
-    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ action, orderId: state.orderId }));
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ action, ...state }));
   } catch (error) {
     console.error(`[control] ${action} failed:`, error.message);
     res.writeHead(error.code ?? 500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: error.message }));
