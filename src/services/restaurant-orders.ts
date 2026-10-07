@@ -24,7 +24,10 @@ export type RestaurantOrder = {
   customerId: string;
   restaurantId: string;
   status: RestaurantOrderStatus;
+  /** What the customer pays: items + delivery fee (#145). */
   totalAmount: string | number;
+  /** The items as priced at checkout (#145): the restaurant's side of the order. Null on older orders. */
+  subtotalAmount?: string | null;
   items: RestaurantOrderItem[];
   createdAt?: string;
 };
