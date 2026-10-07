@@ -217,7 +217,9 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
     <View style={styles.field} testID="item-editor-photo" nativeID="item-editor-photo">
       <ThemedText type="smallBold">Photo</ThemedText>
       {primary ? (
-        <Image source={{ uri: primary.url }} style={styles.photo} contentFit="cover" accessibilityLabel={`Photo of ${item.name}`} testID="item-editor-photo-image" />
+        <View testID="item-editor-photo-image" nativeID="item-editor-photo-image">
+          <Image source={{ uri: primary.url }} style={styles.photo} contentFit="cover" accessibilityLabel={`Photo of ${item.name}`} />
+        </View>
       ) : (
         <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-empty">
           No photo yet. Customers see a placeholder.

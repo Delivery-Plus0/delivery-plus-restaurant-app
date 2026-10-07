@@ -30,9 +30,9 @@ export function acceptedMimeType(mimeType: string | null | undefined, fileName: 
 }
 
 /** A clear reason the picked file can't be uploaded, before asking the backend (which checks again). */
-export function pickedImageProblem(type: ImageMimeType | null, fileSize?: number): string | null {
+export function pickedImageProblem(type: ImageMimeType | null, fileSize?: number, maxBytes = MAX_IMAGE_BYTES): string | null {
   if (!type) return 'Choose a JPEG, PNG or WebP image.';
-  if (fileSize !== undefined && fileSize > MAX_IMAGE_BYTES) return 'Choose an image under 10 MB.';
+  if (fileSize !== undefined && fileSize > maxBytes) return `Choose an image under ${Math.round(maxBytes / (1024 * 1024))} MB.`;
   return null;
 }
 
@@ -40,7 +40,7 @@ export function pickedImageProblem(type: ImageMimeType | null, fileSize?: number
  * Lets the user pick one image from their library (the camera on native when `source` is
  * 'camera'). Returns null when they cancel or deny access; throws a readable message otherwise.
  */
-export async function pickImage(source: 'library' | 'camera' = 'library'): Promise<PickedImage | null> {
+export async function pickImage(source: 'library' | 'camera' = 'library', maxBytes = MAX_IMAGE_BYTES): Promise<PickedImage | null> {
   const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.85, allowsEditing: false };
   if (source === 'camera' && Platform.OS !== 'web') {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -51,7 +51,7 @@ export async function pickImage(source: 'library' | 'camera' = 'library'): Promi
   const asset = result.assets[0];
   const fileName = asset.fileName ?? `image-${Date.now()}.jpg`;
   const mimeType = acceptedMimeType(asset.mimeType, fileName);
-  const problem = pickedImageProblem(mimeType, asset.fileSize ?? undefined);
+  const problem = pickedImageProblem(mimeType, asset.fileSize ?? undefined, maxBytes);
   if (problem) throw new Error(problem);
   return { uri: asset.uri, mimeType: mimeType as ImageMimeType, fileName, fileSize: asset.fileSize ?? undefined };
 }

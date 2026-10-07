@@ -107,6 +107,13 @@ tags:
     file: ../../scripts/control.js
     env:
       ACTION: menu/upload-photo
+# The upload happened behind the app's back, so reload the menu to see it (an upload from the
+# editor reloads it by itself).
+- openLink: ${APP_URL}/menu
+- extendedWaitUntil:
+    visible:
+      id: item-${output.control.itemId}-edit
+    timeout: 20000
 - tapOn:
     id: item-${output.control.itemId}-edit
 - extendedWaitUntil:

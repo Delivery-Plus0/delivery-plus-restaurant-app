@@ -29,6 +29,7 @@ describe('pickedImageProblem', () => {
   it('explains a wrong type or an oversized file', () => {
     expect(pickedImageProblem(null)).toBe('Choose a JPEG, PNG or WebP image.');
     expect(pickedImageProblem('image/png', 10 * 1024 * 1024 + 1)).toBe('Choose an image under 10 MB.');
+    expect(pickedImageProblem('image/png', 5 * 1024 * 1024 + 1, 5 * 1024 * 1024)).toBe('Choose an image under 5 MB.');
   });
 
   it('allows an accepted image within the limit (or of unknown size)', () => {
