@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { OrderDetailSheet } from '@/components/order-detail-sheet';
@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { Toast } from '@/components/ui/toast';
 import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   const [showOther, setShowOther] = useState(false);
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const hideNotice = useCallback(() => setNotice(null), []);
 
   async function signOut() {
     const ok = await confirm({ title: 'Sign out?', message: 'You can sign back in at any time.', confirmLabel: 'Sign out' });
@@ -112,7 +114,6 @@ export default function HomeScreen() {
             ) : (
               <>
                 {orders.error ? <InlineAlert message="Couldn't refresh the orders. Showing the last ones loaded." testID="orders-stale" /> : null}
-                {notice ? <InlineAlert tone="success" message={notice} onDismiss={() => setNotice(null)} testID="board-notice" /> : null}
                 <View style={styles.board}>
                   {KITCHEN_LANES.map((lane) => (
                     <View key={lane.status} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
@@ -176,6 +177,7 @@ export default function HomeScreen() {
           }}
         />
       ) : null}
+      <Toast message={notice} onHide={hideNotice} testID="board-notice" />
     </Screen>
   );
 }

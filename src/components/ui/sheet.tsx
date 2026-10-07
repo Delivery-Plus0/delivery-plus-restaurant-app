@@ -17,7 +17,7 @@ type SheetProps = {
 
 /**
  * Bottom sheet for details that don't need their own page. Tapping the backdrop, the close button or
- * the system back button closes it. Copied in the driver and restaurant apps until the shared kit (#155).
+ * the system back button closes it. Part of the shared UI kit (#155): identical in all three apps.
  */
 export function Sheet({ visible, title, onClose, children, testID = 'sheet' }: SheetProps) {
   return (

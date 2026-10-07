@@ -49,7 +49,10 @@
     "export:web": "expo export --platform web",
     "e2e:smoke": "node e2e/scripts/run.mjs --suite smoke",
     "e2e:business": "node e2e/scripts/run.mjs --suite business",
-    "e2e:all": "node e2e/scripts/run.mjs --suite all"
+    "e2e:all": "node e2e/scripts/run.mjs --suite all",
+    "kit:check": "node scripts/kit.mjs check",
+    "kit:update": "node scripts/kit.mjs update",
+    "kit:sync": "node scripts/kit.mjs sync"
   },
   "private": true
 }
