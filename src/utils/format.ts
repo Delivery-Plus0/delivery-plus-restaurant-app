@@ -1,9 +1,19 @@
-const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+export type MoneyLocale = 'en' | 'ar';
 
-/** Backend decimals arrive as strings (TypeORM `decimal`) or numbers (cart); both render the same. */
-export function formatMoney(value: string | number | null | undefined): string {
+const AMOUNT: Record<MoneyLocale, Intl.NumberFormat> = {
+  en: new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  ar: new Intl.NumberFormat('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+};
+
+/**
+ * Egyptian pounds (#152): "EGP 19.98", or "١٩٫٩٨ ج.م." in Arabic (used once #151 adds the language).
+ * Built by hand rather than with Intl's currency style, whose output differs between engines.
+ * Backend decimals arrive as strings (TypeORM `decimal`) or numbers (cart); both render the same.
+ */
+export function formatMoney(value: string | number | null | undefined, locale: MoneyLocale = 'en'): string {
   const amount = typeof value === 'number' ? value : Number.parseFloat(value ?? '');
-  return currency.format(Number.isFinite(amount) ? amount : 0);
+  const digits = AMOUNT[locale].format(Number.isFinite(amount) ? amount : 0);
+  return locale === 'ar' ? `${digits}\u00a0ج.م.` : `EGP\u00a0${digits}`;
 }
 
 export function shortId(id: string): string {

@@ -23,6 +23,6 @@ tags:
     timeout: 30000
 - assertVisible:
     id: order-${output.control.orderId}-total
-    text: '\$20\.00'
+    text: 'EGP.20\.00'
 - assertVisible:
     id: order-${output.control.orderId}-start-preparing
