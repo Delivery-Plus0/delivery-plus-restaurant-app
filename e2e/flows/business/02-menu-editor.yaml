@@ -3,7 +3,8 @@ name: Menu editor - the owner adds a category and an item, edits the price, arch
 tags:
   - business
 ---
-# Fixture: nothing left over from an earlier, interrupted run.
+# Fixture: nothing left over from an earlier, interrupted run. (Feedback alerts also hold their
+# icon, so the flow waits for the alert by id and checks its sentence separately.)
 - runScript:
     file: ../../scripts/control.js
     env:
@@ -30,8 +31,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: menu-feedback
-      text: 'Added the E2E Desserts category'
     timeout: 15000
+- assertVisible: 'Added the E2E Desserts category'
 - runScript:
     file: ../../scripts/control.js
     env:
@@ -60,8 +61,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: menu-feedback
-      text: 'Added E2E Basbousa to the menu'
     timeout: 15000
+- assertVisible: 'Added E2E Basbousa to the menu'
 - runScript:
     file: ../../scripts/control.js
     env:
@@ -85,8 +86,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: menu-feedback
-      text: 'Saved E2E Basbousa'
     timeout: 15000
+- assertVisible: 'Saved E2E Basbousa'
 - assertVisible: '.*40\.50'
 
 # Archive it, behind a confirmation: it leaves the menu.
@@ -107,8 +108,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: menu-feedback
-      text: 'Archived E2E Basbousa'
     timeout: 15000
+- assertVisible: 'Archived E2E Basbousa'
 - assertNotVisible:
     id: item-${output.control.itemId}
 - runScript:
@@ -124,7 +125,7 @@ tags:
 - extendedWaitUntil:
     visible:
       id: menu-feedback
-      text: 'Deleted the E2E Desserts category'
     timeout: 15000
+- assertVisible: 'Deleted the E2E Desserts category'
 - assertNotVisible:
     id: menu-section-${output.control.categoryId}
