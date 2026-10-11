@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
 import { Icon } from '@/components/ui/icon';
 import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
@@ -20,7 +21,6 @@ import type { KitchenStatus, RestaurantOrder, TodaySummary } from '@/services/re
 import type { Restaurant } from '@/services/restaurants';
 import { clearSession, useAuthSession } from '@/services/session';
 import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant, useTodaySummary } from '@/state/restaurant';
-import { confirm } from '@/utils/confirm';
 import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
 
@@ -40,10 +40,11 @@ export default function HomeScreen() {
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const hideNotice = useCallback(() => setNotice(null), []);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
 
   async function signOut() {
-    const ok = await confirm({ title: 'Sign out?', message: 'You can sign back in at any time.', confirmLabel: 'Sign out' });
-    if (ok) await clearSession();
+    setConfirmingSignOut(false);
+    await clearSession();
   }
 
   async function refreshAll() {
@@ -60,7 +61,7 @@ export default function HomeScreen() {
       <ScreenHeader
         title={restaurant?.name ?? 'Delivery Plus Restaurant'}
         subtitle={session?.user.email}
-        right={<AppButton testID="sign-out" title="Sign out" icon="logout" variant="ghost" size="sm" onPress={() => void signOut()} />}
+        right={<AppButton testID="sign-out" title="Sign out" icon="logout" variant="ghost" size="sm" onPress={() => setConfirmingSignOut(true)} />}
       />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -178,6 +179,15 @@ export default function HomeScreen() {
         />
       ) : null}
       <Toast message={notice} onHide={hideNotice} testID="board-notice" />
+      <Dialog
+        visible={confirmingSignOut}
+        title="Sign out?"
+        message="You can sign back in at any time."
+        confirmLabel="Sign out"
+        onConfirm={() => void signOut()}
+        onCancel={() => setConfirmingSignOut(false)}
+        testID="sign-out-dialog"
+      />
     </Screen>
   );
 }
