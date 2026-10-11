@@ -9,6 +9,7 @@ import { BrandColors, Spacing } from '@/constants/theme';
 import type { KitchenStatus, RestaurantOrder } from '@/services/restaurant-orders';
 import { formatMoney, formatRelativeTime, shortId } from '@/utils/format';
 import { KITCHEN_ACTIONS, nextKitchenStatus, ORDER_STATUS_META } from '@/utils/order-status';
+import { t } from '@/i18n';
 
 type RestaurantOrderCardProps = {
   order: RestaurantOrder;
@@ -52,7 +53,7 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error, onOp
         ))}
         <View style={styles.itemRow}>
           <ThemedText type="smallBold" style={styles.itemName}>
-            Items total
+            {t('Items total')}
           </ThemedText>
           {/* The restaurant's amount is the items; the delivery fee in totalAmount isn't theirs (#145). */}
           <ThemedText type="smallBold" style={styles.price} testID={`order-${order.id}-total`}>
@@ -64,7 +65,7 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error, onOp
       {error ? <InlineAlert message={error} testID={`order-${order.id}-error`} /> : null}
       <View style={styles.actions}>
         {onOpen ? (
-          <AppButton testID={`order-${order.id}-details`} title="Details" variant="secondary" size="sm" fullWidth={false} onPress={onOpen} />
+          <AppButton testID={`order-${order.id}-details`} title={t('Details')} variant="secondary" size="sm" fullWidth={false} onPress={onOpen} />
         ) : null}
         {next && onAction ? (
           <View style={styles.primaryAction}>
@@ -74,7 +75,7 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error, onOp
               size="sm"
               loading={busy}
               onPress={() => onAction(next)}
-              accessibilityHint={`Moves this order to ${ORDER_STATUS_META[next].label}.`}
+              accessibilityHint={t('Moves this order to {status}.', { status: ORDER_STATUS_META[next].label })}
             />
           </View>
         ) : null}

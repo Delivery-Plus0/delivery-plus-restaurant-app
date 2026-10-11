@@ -3,12 +3,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { BrandColors, Layout, Radius, Spacing } from '@/constants/theme';
 import type { Restaurant } from '@/services/restaurants';
+import { t } from '@/i18n';
 
 /** Chips to switch between the owner's restaurants; shown only when there is more than one. */
 export function RestaurantPicker({ restaurants, selectedId, onSelect }: { restaurants: Restaurant[]; selectedId: string; onSelect: (id: string) => void }) {
   if (restaurants.length < 2) return null;
   return (
-    <View style={styles.picker} accessibilityLabel="Choose restaurant">
+    <View style={styles.picker} accessibilityLabel={t('Choose restaurant')}>
       {restaurants.map((r) => {
         const selected = r.id === selectedId;
         return (

@@ -1,0 +1,31 @@
+url: ${APP_URL}
+name: Arabic - the header switch shows the order board in Arabic, remembers it across a reload, and switches back
+tags:
+  - smoke
+---
+# E2E builds start in English (EXPO_PUBLIC_DEFAULT_LOCALE=en); real owners default to Arabic (#151).
+- runFlow: ../_shared/login.yaml
+- extendedWaitUntil:
+    visible:
+      id: restaurant-heading
+    timeout: 20000
+- tapOn:
+    id: language-ar
+- extendedWaitUntil:
+    visible: 'طلبات المطبخ'
+    timeout: 15000
+- assertVisible: 'طلبات جديدة'
+
+# The choice is remembered: a reload opens the board in Arabic.
+- openLink: ${APP_URL}/home
+- extendedWaitUntil:
+    visible: 'طلبات المطبخ'
+    timeout: 20000
+- assertVisible: 'تسجيل الخروج'
+
+# Back to English.
+- tapOn:
+    id: language-en
+- extendedWaitUntil:
+    visible: 'Kitchen orders'
+    timeout: 15000

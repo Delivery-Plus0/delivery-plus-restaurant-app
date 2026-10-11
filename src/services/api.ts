@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/config/api';
 import { clearSession, getSessionSnapshot } from '@/services/session';
+import { t } from '@/i18n/core';
 
 export type ErrorResponse = {
   statusCode: number;
@@ -44,7 +45,7 @@ function readMessage(message: unknown): string | null {
 export function normalizeApiError(payload: unknown): ErrorResponse {
   const record = (payload ?? {}) as Partial<Record<keyof ErrorResponse, unknown>>;
   const statusCode = typeof record.statusCode === 'number' ? record.statusCode : 500;
-  const message = statusCode >= 500 ? SERVER_ERROR_MESSAGE : readMessage(record.message) ?? GENERIC_MESSAGE;
+  const message = statusCode >= 500 ? t(SERVER_ERROR_MESSAGE) : readMessage(record.message) ?? t(GENERIC_MESSAGE);
 
   return {
     statusCode,
@@ -83,8 +84,8 @@ async function send(url: string, init: RequestInit): Promise<Response> {
       NETWORK_ERROR_STATUS,
       timedOut ? 'Timeout' : 'NetworkError',
       timedOut
-        ? 'The request took too long. Check your connection and try again.'
-        : "Can't reach Delivery Plus. Check your connection and try again.",
+        ? t('The request took too long. Check your connection and try again.')
+        : t("Can't reach Delivery Plus. Check your connection and try again."),
     );
   } finally {
     clearTimeout(timeout);
@@ -98,7 +99,7 @@ async function request<T>(path: string, options: RequestInit = {}, authRequired 
   if (authRequired) {
     const token = getSessionSnapshot().session?.token;
     if (!token) {
-      throw new ApiError(401, 'Unauthorized', 'Please sign in again.');
+      throw new ApiError(401, 'Unauthorized', t('Please sign in again.'));
     }
     headers.set('Authorization', `Bearer ${token}`);
   }

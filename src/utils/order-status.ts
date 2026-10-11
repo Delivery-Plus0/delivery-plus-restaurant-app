@@ -1,28 +1,29 @@
 import type { BadgeTone } from '@/components/ui/badge';
 import type { KitchenStatus, RestaurantOrder, RestaurantOrderStatus } from '@/services/restaurant-orders';
 import type { Restaurant, RestaurantStatus } from '@/services/restaurants';
+import { t } from '@/i18n/core';
 
 /** Only RESTAURANT_OWNER accounts may use this app; other roles are refused at sign-in. */
 export const OWNER_ROLE = 'RESTAURANT_OWNER';
 
 export const ORDER_STATUS_META: Record<RestaurantOrderStatus, { label: string; tone: BadgeTone }> = {
-  CREATED: { label: 'Awaiting payment', tone: 'neutral' },
-  PAYMENT_PENDING: { label: 'Payment pending', tone: 'warning' },
-  CONFIRMED: { label: 'Confirmed', tone: 'info' },
-  PREPARING: { label: 'In kitchen', tone: 'brand' },
-  READY_FOR_PICKUP: { label: 'Ready for pickup', tone: 'success' },
-  DRIVER_ASSIGNED: { label: 'Driver assigned', tone: 'brand' },
-  PICKED_UP: { label: 'Picked up', tone: 'info' },
-  DELIVERED: { label: 'Delivered', tone: 'success' },
-  FAILED: { label: 'Payment failed', tone: 'danger' },
-  CANCELLED: { label: 'Cancelled', tone: 'neutral' },
+  CREATED: { get label() { return t('Awaiting payment'); }, tone: 'neutral' },
+  PAYMENT_PENDING: { get label() { return t('Payment pending'); }, tone: 'warning' },
+  CONFIRMED: { get label() { return t('Confirmed'); }, tone: 'info' },
+  PREPARING: { get label() { return t('In kitchen'); }, tone: 'brand' },
+  READY_FOR_PICKUP: { get label() { return t('Ready for pickup'); }, tone: 'success' },
+  DRIVER_ASSIGNED: { get label() { return t('Driver assigned'); }, tone: 'brand' },
+  PICKED_UP: { get label() { return t('Picked up'); }, tone: 'info' },
+  DELIVERED: { get label() { return t('Delivered'); }, tone: 'success' },
+  FAILED: { get label() { return t('Payment failed'); }, tone: 'danger' },
+  CANCELLED: { get label() { return t('Cancelled'); }, tone: 'neutral' },
 };
 
 export const RESTAURANT_STATUS_META: Record<RestaurantStatus, { label: string; tone: BadgeTone }> = {
-  OPEN: { label: 'Open', tone: 'success' },
-  BUSY: { label: 'Busy', tone: 'warning' },
-  CLOSED: { label: 'Closed', tone: 'neutral' },
-  SUSPENDED: { label: 'Suspended', tone: 'danger' },
+  OPEN: { get label() { return t('Open'); }, tone: 'success' },
+  BUSY: { get label() { return t('Busy'); }, tone: 'warning' },
+  CLOSED: { get label() { return t('Closed'); }, tone: 'neutral' },
+  SUSPENDED: { get label() { return t('Suspended'); }, tone: 'danger' },
 };
 
 /** The owner's chosen restaurant if it still exists, else the first one taking orders (OPEN/BUSY), else the first. */
@@ -37,8 +38,8 @@ export function selectRestaurant(restaurants: Restaurant[] | undefined, selected
 
 /** The kitchen's only transitions; payment owns CONFIRMED and dispatch takes over after READY_FOR_PICKUP. */
 export const KITCHEN_ACTIONS: Record<KitchenStatus, { label: string; id: string }> = {
-  PREPARING: { label: 'Start preparing', id: 'start-preparing' },
-  READY_FOR_PICKUP: { label: 'Ready for pickup', id: 'ready-for-pickup' },
+  PREPARING: { get label() { return t('Start preparing'); }, id: 'start-preparing' },
+  READY_FOR_PICKUP: { get label() { return t('Ready for pickup'); }, id: 'ready-for-pickup' },
 };
 
 /** The one step the kitchen can take on this order, or none. */
@@ -51,9 +52,9 @@ export function nextKitchenStatus(status: RestaurantOrderStatus): KitchenStatus 
 export type Lane = { status: 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP'; title: string; note: string };
 
 export const KITCHEN_LANES: Lane[] = [
-  { status: 'CONFIRMED', title: 'New orders', note: 'Paid and waiting for the kitchen' },
-  { status: 'PREPARING', title: 'In the kitchen', note: 'Being prepared' },
-  { status: 'READY_FOR_PICKUP', title: 'Ready for pickup', note: 'A driver is assigned automatically' },
+  { status: 'CONFIRMED', get title() { return t('New orders'); }, get note() { return t('Paid and waiting for the kitchen'); } },
+  { status: 'PREPARING', get title() { return t('In the kitchen'); }, get note() { return t('Being prepared'); } },
+  { status: 'READY_FOR_PICKUP', get title() { return t('Ready for pickup'); }, get note() { return t('A driver is assigned automatically'); } },
 ];
 
 const KITCHEN_STATUSES = new Set<RestaurantOrderStatus>(KITCHEN_LANES.map((lane) => lane.status));
@@ -81,7 +82,10 @@ export function canReject(status: RestaurantOrderStatus): boolean {
 /** Matches the backend's limit on a cancellation reason. */
 export const REJECT_REASON_MAX = 200;
 
-export const REJECT_REASONS = ['An item is out of stock', 'The kitchen is too busy', 'We are closing soon'];
+/** Preset reasons in the owner's language (#151); the chosen text is what the customer is told. */
+export function rejectReasons(): string[] {
+  return [t('An item is out of stock'), t('The kitchen is too busy'), t('We are closing soon')];
+}
 
 /**
  * The area part of a drop-off address for the kitchen: the address without its first line (street and

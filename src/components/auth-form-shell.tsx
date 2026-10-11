@@ -4,6 +4,7 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } f
 import { ThemedText } from '@/components/themed-text';
 import { Screen } from '@/components/ui/screen';
 import { BrandColors, Elevation, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type AuthFormShellProps = {
   title: string;
@@ -22,7 +23,7 @@ export function AuthFormShell({ title, subtitle, children, footer }: AuthFormShe
             source={require('@/assets/logo.png')}
             style={styles.logo}
             resizeMode="contain"
-            accessibilityLabel="Delivery Plus"
+            accessibilityLabel={t('Delivery Plus')}
           />
           <View style={styles.card}>
             <ThemedText type="subtitle" accessibilityRole="header">

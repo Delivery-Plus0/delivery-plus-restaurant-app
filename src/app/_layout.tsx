@@ -1,9 +1,10 @@
 import { DefaultTheme, Slot, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { BrandColors } from '@/constants/theme';
+import { loadSavedLocale, useLocale } from '@/i18n';
 import { hydrateSession, useAuthSession } from '@/services/session';
 
 void SplashScreen.preventAutoHideAsync();
@@ -23,24 +24,29 @@ const navigationTheme = {
 
 export default function RootLayout() {
   const session = useAuthSession();
+  const locale = useLocale();
+  const [localeReady, setLocaleReady] = useState(false);
 
   useEffect(() => {
     void hydrateSession();
+    // #151: the saved language (and its layout direction) before the first screen shows.
+    void loadSavedLocale().finally(() => setLocaleReady(true));
   }, []);
 
   useEffect(() => {
     // Keep the native splash up until we know which stack to show, so there's no flash of the wrong screen.
-    if (session.hydrated) SplashScreen.hide();
-  }, [session.hydrated]);
+    if (session.hydrated && localeReady) SplashScreen.hide();
+  }, [session.hydrated, localeReady]);
 
-  if (!session.hydrated) {
+  if (!session.hydrated || !localeReady) {
     return null;
   }
 
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="dark" />
-      <Slot />
+      {/* Keyed by language so every screen re-renders in the new one (#151). */}
+      <Slot key={locale} />
     </ThemeProvider>
   );
 }

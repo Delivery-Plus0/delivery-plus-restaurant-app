@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { IconButton } from '@/components/ui/icon-button';
 import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type SheetProps = {
   visible: boolean;
@@ -23,13 +24,13 @@ export function Sheet({ visible, title, onClose, children, testID = 'sheet' }: S
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.root}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" accessibilityRole="button" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('Close')} accessibilityRole="button" />
         <SafeAreaView edges={['bottom']} style={styles.sheet} accessibilityViewIsModal testID={testID} nativeID={testID}>
           <View style={styles.header}>
             <ThemedText type="subtitle" accessibilityRole="header" style={styles.title} numberOfLines={2}>
               {title}
             </ThemedText>
-            <IconButton icon="close" accessibilityLabel="Close" onPress={onClose} testID={`${testID}-close`} />
+            <IconButton icon="close" accessibilityLabel={t('Close')} onPress={onClose} testID={`${testID}-close`} />
           </View>
           <ScrollView contentContainerStyle={styles.body}>{children}</ScrollView>
         </SafeAreaView>

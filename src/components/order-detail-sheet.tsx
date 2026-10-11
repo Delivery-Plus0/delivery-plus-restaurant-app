@@ -12,7 +12,8 @@ import { ApiError } from '@/services/api';
 import type { RestaurantOrder } from '@/services/restaurant-orders';
 import { rejectOrder, useOrderDriver } from '@/state/restaurant';
 import { formatDateTime, formatMoney, shortId } from '@/utils/format';
-import { canReject, dropOffArea, ORDER_STATUS_META, REJECT_REASON_MAX, REJECT_REASONS } from '@/utils/order-status';
+import { canReject, dropOffArea, ORDER_STATUS_META, REJECT_REASON_MAX, rejectReasons } from '@/utils/order-status';
+import { t } from '@/i18n';
 
 type OrderDetailSheetProps = {
   restaurantId: string;
@@ -53,13 +54,13 @@ function OrderDetail({ restaurantId, order, onRejected }: { restaurantId: string
         <Badge label={status.label} tone={status.tone} testID="order-sheet-status" />
       </View>
 
-      <Section title="Customer">
+      <Section title={t('Customer')}>
         <ThemedText type="default" testID="order-sheet-customer">
-          {order.customerFirstName || 'Customer'}
+          {order.customerFirstName || t('Customer')}
         </ThemedText>
       </Section>
 
-      <Section title="Items">
+      <Section title={t('Items')}>
         {order.items.map((item, index) => (
           <View key={`${item.menuItemId}-${index}`} style={styles.row}>
             <ThemedText type="small" style={styles.quantity}>
@@ -75,7 +76,7 @@ function OrderDetail({ restaurantId, order, onRejected }: { restaurantId: string
         ))}
         <View style={styles.row}>
           <ThemedText type="smallBold" style={styles.flex}>
-            Items total
+            {t('Items total')}
           </ThemedText>
           <ThemedText type="smallBold" style={styles.price} testID="order-sheet-total">
             {formatMoney(order.subtotalAmount ?? order.totalAmount)}
@@ -83,32 +84,32 @@ function OrderDetail({ restaurantId, order, onRejected }: { restaurantId: string
         </View>
       </Section>
 
-      <Section title="Customer notes">
+      <Section title={t('Customer notes')}>
         <ThemedText type="small" themeColor={order.deliveryNotes ? 'text' : 'textSecondary'} testID="order-sheet-notes">
-          {order.deliveryNotes || 'No notes'}
+          {order.deliveryNotes || t('No notes')}
         </ThemedText>
       </Section>
 
       {area ? (
-        <Section title="Drop-off area">
+        <Section title={t('Drop-off area')}>
           <ThemedText type="small" testID="order-sheet-area">
             {area}
           </ThemedText>
         </Section>
       ) : null}
 
-      <Section title="Driver">
+      <Section title={t('Driver')}>
         <ThemedText type="small" themeColor={driver.data ? 'text' : 'textSecondary'} testID="order-sheet-driver">
           {driver.data
             ? [driver.data.displayName, driver.data.vehicleType, driver.data.licensePlate].filter(Boolean).join(' · ')
             : driver.isLoading
-              ? 'Checking…'
-              : 'No driver assigned yet'}
+              ? t('Checking…')
+              : t('No driver assigned yet')}
         </ThemedText>
       </Section>
 
       {canReject(order.status) ? (
-        <AppButton testID="order-sheet-reject" title="Reject order" icon="close" variant="danger" size="sm" onPress={() => setRejecting(true)} />
+        <AppButton testID="order-sheet-reject" title={t('Reject order')} icon="close" variant="danger" size="sm" onPress={() => setRejecting(true)} />
       ) : null}
     </View>
   );
@@ -134,7 +135,7 @@ function RejectForm({
   async function submit() {
     if (inFlight.current) return;
     if (!trimmed) {
-      setError('Tell the customer why: pick a reason or write one.');
+      setError(t('Tell the customer why: pick a reason or write one.'));
       return;
     }
     inFlight.current = true;
@@ -142,9 +143,9 @@ function RejectForm({
     setError(null);
     try {
       await rejectOrder(restaurantId, order.id, trimmed);
-      onRejected(`Order ${shortId(order.id)} rejected. The customer has been told why.`);
+      onRejected(t('Order {id} rejected. The customer has been told why.', { id: shortId(order.id) }));
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'That did not go through. Check your connection and try again.');
+      setError(caught instanceof ApiError ? caught.message : t('That did not go through. Check your connection and try again.'));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -153,12 +154,12 @@ function RejectForm({
 
   return (
     <View style={styles.reject} testID="reject-form" nativeID="reject-form">
-      <ThemedText type="smallBold">Why are you rejecting this order?</ThemedText>
+      <ThemedText type="smallBold">{t('Why are you rejecting this order?')}</ThemedText>
       <ThemedText type="caption" themeColor="textSecondary">
-        The customer sees this reason. You can only reject an order before you start preparing it.
+        {t('The customer sees this reason. You can only reject an order before you start preparing it.')}
       </ThemedText>
       <View style={styles.reasons}>
-        {REJECT_REASONS.map((preset, index) => (
+        {rejectReasons().map((preset, index) => (
           <AppButton
             key={preset}
             testID={`reject-reason-${index}`}
@@ -172,15 +173,15 @@ function RejectForm({
       </View>
       <FormTextInput
         testID="reject-reason-input"
-        label="Reason"
+        label={t('Reason')}
         value={reason}
         onChangeText={setReason}
         maxLength={REJECT_REASON_MAX}
-        placeholder="For example: we ran out of an item"
+        placeholder={t('For example: we ran out of an item')}
       />
       {error ? <InlineAlert message={error} testID="reject-error" /> : null}
-      <AppButton testID="reject-confirm" title="Reject and tell the customer" variant="danger" size="sm" loading={busy} onPress={() => void submit()} />
-      <AppButton testID="reject-cancel" title="Keep the order" variant="ghost" size="sm" disabled={busy} onPress={onCancel} />
+      <AppButton testID="reject-confirm" title={t('Reject and tell the customer')} variant="danger" size="sm" loading={busy} onPress={() => void submit()} />
+      <AppButton testID="reject-cancel" title={t('Keep the order')} variant="ghost" size="sm" disabled={busy} onPress={onCancel} />
     </View>
   );
 }
