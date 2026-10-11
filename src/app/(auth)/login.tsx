@@ -13,6 +13,7 @@ import { loginAccount } from '@/services/auth';
 import { setSession } from '@/services/session';
 import { describeLoginError } from '@/utils/login-errors';
 import { OWNER_ROLE } from '@/utils/order-status';
+import { t } from '@/i18n';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -27,8 +28,8 @@ export default function LoginScreen() {
   const inFlight = useRef(false);
   const passwordRef = useRef<TextInput>(null);
 
-  const emailError = !email.trim() ? 'Email is required' : !emailPattern.test(email.trim()) ? 'Enter a valid email' : undefined;
-  const passwordError = !password ? 'Password is required' : undefined;
+  const emailError = !email.trim() ? t('Email is required') : !emailPattern.test(email.trim()) ? t('Enter a valid email') : undefined;
+  const passwordError = !password ? t('Password is required') : undefined;
   const show = (field: keyof typeof touched) => submitted || touched[field];
 
   async function handleSubmit() {
@@ -42,7 +43,7 @@ export default function LoginScreen() {
       const auth = await loginAccount({ email: email.trim(), password });
       if (auth.role !== OWNER_ROLE) {
         // The credentials are valid but this app is for restaurant owners only; don't keep the session.
-        setError('This app is for restaurant owners. Sign in with an owner account, or use the Delivery Plus customer or driver app.');
+        setError(t('This app is for restaurant owners. Sign in with an owner account, or use the Delivery Plus customer or driver app.'));
         return;
       }
       await setSession(auth.accessToken);
@@ -68,22 +69,22 @@ export default function LoginScreen() {
 
   return (
     <AuthFormShell
-      title="Restaurant sign in"
-      subtitle="Open your kitchen order desk."
+      title={t('Restaurant sign in')}
+      subtitle={t('Open your kitchen order desk.')}
       footer={
         <ThemedText type="small" themeColor="textSecondary">
-          Restaurant owner accounts are provisioned by your administrator.
+          {t('Restaurant owner accounts are provisioned by your administrator.')}
         </ThemedText>
       }
     >
       <FormTextInput
         testID="login-email"
-        label="Email"
+        label={t('Email')}
         value={email}
         onChangeText={edit(setEmail, { newAccount: true })}
         onBlur={() => setTouched((current) => ({ ...current, email: true }))}
         error={show('email') ? emailError : undefined}
-        placeholder="you@example.com"
+        placeholder={t('you@example.com')}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="email"
@@ -96,12 +97,12 @@ export default function LoginScreen() {
       <FormTextInput
         testID="login-password"
         ref={passwordRef}
-        label="Password"
+        label={t('Password')}
         value={password}
         onChangeText={edit(setPassword)}
         onBlur={() => setTouched((current) => ({ ...current, password: true }))}
         error={show('password') ? passwordError : undefined}
-        placeholder="Your password"
+        placeholder={t('Your password')}
         secureTextEntry
         autoComplete="current-password"
         textContentType="password"
@@ -115,7 +116,7 @@ export default function LoginScreen() {
         </View>
       ) : null}
 
-      <AppButton testID="login-submit" title="Sign in" onPress={() => void handleSubmit()} loading={isSubmitting} />
+      <AppButton testID="login-submit" title={t('Sign in')} onPress={() => void handleSubmit()} loading={isSubmitting} />
 
       {__DEV__ ? (
         // Development builds only: the dev (:3000) and E2E (:3100) backends have different accounts.

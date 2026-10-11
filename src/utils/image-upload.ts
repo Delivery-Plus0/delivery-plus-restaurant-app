@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
+import { t } from '@/i18n/core';
 
 /** The backend's presigned POST (shared S3StorageService): post `fields` plus the file to `uploadUrl`. */
 export type PresignedUpload = {
@@ -31,8 +32,8 @@ export function acceptedMimeType(mimeType: string | null | undefined, fileName: 
 
 /** A clear reason the picked file can't be uploaded, before asking the backend (which checks again). */
 export function pickedImageProblem(type: ImageMimeType | null, fileSize?: number, maxBytes = MAX_IMAGE_BYTES): string | null {
-  if (!type) return 'Choose a JPEG, PNG or WebP image.';
-  if (fileSize !== undefined && fileSize > maxBytes) return `Choose an image under ${Math.round(maxBytes / (1024 * 1024))} MB.`;
+  if (!type) return t('Choose a JPEG, PNG or WebP image.');
+  if (fileSize !== undefined && fileSize > maxBytes) return t('Choose an image under {mb} MB.', { mb: Math.round(maxBytes / (1024 * 1024)) });
   return null;
 }
 
@@ -68,5 +69,5 @@ export async function uploadToPresigned(presigned: PresignedUpload, image: Picke
     form.append('file', { uri: image.uri, name: image.fileName, type: image.mimeType } as unknown as Blob);
   }
   const response = await fetch(presigned.uploadUrl, { method: 'POST', body: form });
-  if (!response.ok) throw new Error('The upload did not go through. Check your connection and try again.');
+  if (!response.ok) throw new Error(t('The upload did not go through. Check your connection and try again.'));
 }

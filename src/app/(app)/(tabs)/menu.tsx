@@ -22,6 +22,7 @@ import { canOwnerChangeStatus, OWNER_STATUSES } from '@/utils/availability';
 import { editorSections, moveCategory } from '@/utils/menu-editor';
 import { formatMoney } from '@/utils/format';
 import { RESTAURANT_STATUS_META } from '@/utils/order-status';
+import { t } from '@/i18n';
 
 /** Keeps the menu list readable on wide screens. */
 const MAX_MENU_WIDTH = 760;
@@ -39,7 +40,7 @@ export default function MenuScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Menu" subtitle={restaurant?.name ?? session?.user.email} />
+      <ScreenHeader title={t('Menu')} subtitle={restaurant?.name ?? session?.user.email} />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={restaurants.refreshing || menu.refreshing} onRefresh={() => void refreshAll()} />}>
@@ -50,8 +51,8 @@ export default function MenuScreen() {
         ) : !restaurant ? (
           <StateView
             icon="store"
-            title="No restaurant linked to this account"
-            message="Ask an administrator to connect your owner account to a restaurant."
+            title={t('No restaurant linked to this account')}
+            message={t('Ask an administrator to connect your owner account to a restaurant.')}
             testID="restaurants-empty"
           />
         ) : (
@@ -103,7 +104,7 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
       await reloadMenu(restaurantId);
       setFeedback(message);
     } catch (caught) {
-      setError(errorMessage(caught, 'That did not go through. Try again.'));
+      setError(errorMessage(caught, t('That did not go through. Try again.')));
     } finally {
       setBusy(false);
     }
@@ -111,24 +112,24 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
 
   function move(category: MenuCategory, direction: -1 | 1) {
     const order = moveCategory(menu.categories, category.id, direction);
-    if (order) void run(() => reorderCategories(restaurantId, order), `Moved ${category.name} ${direction < 0 ? 'up' : 'down'}`);
+    if (order) void run(() => reorderCategories(restaurantId, order), direction < 0 ? t('Moved {name} up', { name: category.name }) : t('Moved {name} down', { name: category.name }));
   }
 
   return (
     <>
       <View style={styles.toolbar}>
         <View style={styles.flex}>
-          <AppButton testID="menu-add-item" title="Add item" icon="plus" onPress={() => setEditing({ kind: 'item', item: null, categoryId: null })} />
+          <AppButton testID="menu-add-item" title={t('Add item')} icon="plus" onPress={() => setEditing({ kind: 'item', item: null, categoryId: null })} />
         </View>
         <View style={styles.flex}>
-          <AppButton testID="menu-add-category" title="Add category" variant="secondary" onPress={() => setEditing({ kind: 'category', category: null })} />
+          <AppButton testID="menu-add-category" title={t('Add category')} variant="secondary" onPress={() => setEditing({ kind: 'category', category: null })} />
         </View>
       </View>
       {feedback ? <InlineAlert tone="success" message={feedback} onDismiss={() => setFeedback(null)} testID="menu-feedback" /> : null}
       {error ? <InlineAlert message={error} onDismiss={() => setError(null)} testID="menu-error" /> : null}
 
       {sections.length === 0 ? (
-        <StateView icon="food" title="No menu items yet" message="Add a category, then your first item." testID="menu-empty" />
+        <StateView icon="food" title={t('No menu items yet')} message={t('Add a category, then your first item.')} testID="menu-empty" />
       ) : (
         sections.map((section, index) => {
           const category = section.category;
@@ -140,16 +141,16 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
               </ThemedText>
               {category ? (
                 <View style={styles.sectionActions}>
-                  <AppButton testID={`category-${section.id}-up`} title="↑" accessibilityHint="Moves this category up" variant="ghost" size="sm" fullWidth={false} disabled={busy || index === 0} onPress={() => move(category, -1)} />
-                  <AppButton testID={`category-${section.id}-down`} title="↓" accessibilityHint="Moves this category down" variant="ghost" size="sm" fullWidth={false} disabled={busy || index >= menu.categories.length - 1} onPress={() => move(category, 1)} />
-                  <AppButton testID={`category-${section.id}-rename`} title="Rename" variant="ghost" size="sm" fullWidth={false} onPress={() => setEditing({ kind: 'category', category })} />
-                  <AppButton testID={`category-${section.id}-delete`} title="Delete" variant="ghost" size="sm" fullWidth={false} disabled={busy} onPress={() => setDeleting(category)} />
+                  <AppButton testID={`category-${section.id}-up`} title="↑" accessibilityHint={t('Moves this category up')} variant="ghost" size="sm" fullWidth={false} disabled={busy || index === 0} onPress={() => move(category, -1)} />
+                  <AppButton testID={`category-${section.id}-down`} title="↓" accessibilityHint={t('Moves this category down')} variant="ghost" size="sm" fullWidth={false} disabled={busy || index >= menu.categories.length - 1} onPress={() => move(category, 1)} />
+                  <AppButton testID={`category-${section.id}-rename`} title={t('Rename')} variant="ghost" size="sm" fullWidth={false} onPress={() => setEditing({ kind: 'category', category })} />
+                  <AppButton testID={`category-${section.id}-delete`} title={t('Delete')} variant="ghost" size="sm" fullWidth={false} disabled={busy} onPress={() => setDeleting(category)} />
                 </View>
               ) : null}
             </View>
             {section.items.length === 0 ? (
               <ThemedText type="small" themeColor="textSecondary" testID={`menu-section-${section.id}-empty`} nativeID={`menu-section-${section.id}-empty`}>
-                No items in this category yet.
+                {t('No items in this category yet.')}
               </ThemedText>
             ) : null}
             {section.items.map((item, itemIndex) => (
@@ -183,14 +184,14 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
       ) : null}
       <Dialog
         visible={deleting !== null}
-        title={`Delete ${deleting?.name ?? 'this category'}?`}
-        message="Only an empty category can be deleted. Move or archive its items first."
-        confirmLabel="Delete category"
+        title={deleting ? t('Delete {name}?', { name: deleting.name }) : t('Delete this category?')}
+        message={t('Only an empty category can be deleted. Move or archive its items first.')}
+        confirmLabel={t('Delete category')}
         destructive
         onConfirm={() => {
           const category = deleting;
           setDeleting(null);
-          if (category) void run(() => deleteCategory(category.id), `Deleted the ${category.name} category`);
+          if (category) void run(() => deleteCategory(category.id), t('Deleted the {name} category', { name: category.name }));
         }}
         onCancel={() => setDeleting(null)}
         testID="category-delete-dialog"
@@ -215,7 +216,7 @@ function StatusCard({ restaurant }: { restaurant: Restaurant }) {
     try {
       await setRestaurantStatus(restaurant.id, status);
     } catch (caught) {
-      setError(errorMessage(caught, 'Unable to change the status right now.'));
+      setError(errorMessage(caught, t('Unable to change the status right now.')));
     } finally {
       inFlight.current = false;
       setPending(null);
@@ -226,9 +227,9 @@ function StatusCard({ restaurant }: { restaurant: Restaurant }) {
     <Card testID="restaurant-availability">
       <View style={styles.row}>
         <View style={styles.flex}>
-          <ThemedText type="defaultBold">Taking orders</ThemedText>
+          <ThemedText type="defaultBold">{t('Taking orders')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {editable ? OWNER_STATUSES.find((s) => s.status === restaurant.status)?.hint : 'Suspended by an administrator. Contact support to be reinstated.'}
+            {editable ? OWNER_STATUSES.find((s) => s.status === restaurant.status)?.hint : t('Suspended by an administrator. Contact support to be reinstated.')}
           </ThemedText>
         </View>
         <Badge label={current.label} tone={current.tone} testID="restaurant-status" />
@@ -246,7 +247,7 @@ function StatusCard({ restaurant }: { restaurant: Restaurant }) {
                   variant={selected ? 'primary' : 'secondary'}
                   loading={pending === option.status}
                   disabled={pending !== null}
-                  accessibilityHint={selected ? 'Current status.' : `Sets the restaurant to ${option.label}.`}
+                  accessibilityHint={selected ? t('Current status.') : t('Sets the restaurant to {status}.', { status: option.label })}
                   onPress={() => void change(option.status)}
                 />
               </View>
@@ -273,7 +274,7 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
     try {
       await setItemAvailability(restaurantId, item.id, !item.available);
     } catch (caught) {
-      setError(errorMessage(caught, 'Unable to update this item right now.'));
+      setError(errorMessage(caught, t('Unable to update this item right now.')));
     } finally {
       inFlight.current = false;
       setIsSaving(false);
@@ -294,14 +295,14 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
         <Badge label={item.available ? 'Available' : 'Sold out'} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
         <AppButton
           testID={`item-${item.id}-toggle`}
-          title={item.available ? 'Mark sold out' : 'Mark available'}
+          title={item.available ? t('Mark sold out') : t('Mark available')}
           variant="ghost"
           size="sm"
           fullWidth={false}
           loading={isSaving}
           onPress={() => void toggle()}
         />
-        <AppButton testID={`item-${item.id}-edit`} title="Edit" variant="ghost" size="sm" fullWidth={false} onPress={onEdit} />
+        <AppButton testID={`item-${item.id}-edit`} title={t('Edit')} variant="ghost" size="sm" fullWidth={false} onPress={onEdit} />
       </View>
       {error ? <InlineAlert message={error} testID={`item-${item.id}-error`} /> : null}
     </View>

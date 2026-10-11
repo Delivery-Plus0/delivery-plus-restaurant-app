@@ -1,4 +1,5 @@
 import type { MenuCategory, MenuItem } from '@/services/menus';
+import { t } from '@/i18n/core';
 
 /** Same limits as menu-service (#148); the backend enforces them, these only give early feedback. */
 export const NAME_MAX = 100;
@@ -18,13 +19,13 @@ export function parsePrice(text: string): number | null {
 export function validateItemDraft(draft: ItemDraftInput): ItemDraftErrors {
   const errors: ItemDraftErrors = {};
   const name = draft.name.trim();
-  if (!name) errors.name = 'Enter a name';
-  else if (name.length > NAME_MAX) errors.name = `Keep the name under ${NAME_MAX} characters`;
-  if (draft.description.trim().length > DESCRIPTION_MAX) errors.description = `Keep the description under ${DESCRIPTION_MAX} characters`;
+  if (!name) errors.name = t('Enter a name');
+  else if (name.length > NAME_MAX) errors.name = t('Keep the name under {max} characters', { max: NAME_MAX });
+  if (draft.description.trim().length > DESCRIPTION_MAX) errors.description = t('Keep the description under {max} characters', { max: DESCRIPTION_MAX });
   const price = parsePrice(draft.price);
-  if (price === null) errors.price = 'Enter a price in EGP, e.g. 45 or 45.50';
-  else if (price <= 0) errors.price = 'The price must be more than 0';
-  else if (price > PRICE_MAX) errors.price = `The price can be at most EGP ${PRICE_MAX.toLocaleString('en-US')}`;
+  if (price === null) errors.price = t('Enter a price in EGP, e.g. 45 or 45.50');
+  else if (price <= 0) errors.price = t('The price must be more than 0');
+  else if (price > PRICE_MAX) errors.price = t('The price can be at most EGP {max}', { max: PRICE_MAX.toLocaleString('en-US') });
   return errors;
 }
 
@@ -47,7 +48,7 @@ export function editorSections(categories: MenuCategory[], items: MenuItem[]): E
     items: items.filter((item) => item.categoryId === category.id),
   }));
   const other = items.filter((item) => !item.categoryId || !known.has(item.categoryId));
-  if (other.length) sections.push({ id: 'other', category: null, title: 'No category', items: other });
+  if (other.length) sections.push({ id: 'other', category: null, title: t('No category'), items: other });
   return sections;
 }
 

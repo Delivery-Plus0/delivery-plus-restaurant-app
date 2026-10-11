@@ -10,5 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // #151: the app defaults to Arabic; tests assert the English text unless they switch.
+    env: { EXPO_PUBLIC_DEFAULT_LOCALE: 'en' },
   },
 });

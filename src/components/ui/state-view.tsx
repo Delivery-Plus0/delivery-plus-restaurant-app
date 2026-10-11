@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { BrandColors, Radius, Spacing } from '@/constants/theme';
 import { ApiError, NETWORK_ERROR_STATUS } from '@/services/api';
+import { t } from '@/i18n';
 
 type StateViewProps = {
   icon: IconName;
@@ -45,16 +46,17 @@ export function StateView({ icon, title, message, actionLabel, onAction, tone = 
 /** Error state that tells offline failures apart from server errors. */
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const offline = error instanceof ApiError && error.statusCode === NETWORK_ERROR_STATUS;
-  const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+  // Server messages are shown in Arabic when the app has a translation for them (#151).
+  const message = error instanceof Error ? t(error.message) : t('Something went wrong. Please try again.');
 
   return (
     <StateView
       testID="error-state"
       icon={offline ? 'offline' : 'error'}
       tone="danger"
-      title={offline ? 'You appear to be offline' : 'Something went wrong'}
+      title={offline ? t('You appear to be offline') : t('Something went wrong')}
       message={message}
-      actionLabel={onRetry ? 'Try again' : undefined}
+      actionLabel={onRetry ? t('Try again') : undefined}
       onAction={onRetry}
     />
   );

@@ -6,6 +6,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { IconButton } from '@/components/ui/icon-button';
 import { BrandColors, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type ScreenProps = {
   children: ReactNode;
@@ -46,7 +47,7 @@ export function ScreenHeader({ title, subtitle, showBack = false, right }: Scree
 
   return (
     <View style={styles.header}>
-      {showBack ? <IconButton icon="back" accessibilityLabel="Go back" onPress={goBack} /> : null}
+      {showBack ? <IconButton icon="back" accessibilityLabel={t('Go back')} onPress={goBack} /> : null}
       <View style={styles.headerText}>
         <ThemedText type="subtitle" numberOfLines={1} accessibilityRole="header" testID="screen-title">
           {title}

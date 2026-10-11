@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type DialogProps = {
   visible: boolean;
@@ -27,7 +28,7 @@ export function Dialog({
   title,
   message,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel = t('Cancel'),
   destructive = false,
   onConfirm,
   onCancel,

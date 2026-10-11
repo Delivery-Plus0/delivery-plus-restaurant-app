@@ -39,7 +39,7 @@ const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '1280x1800';
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
-  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml'],
+  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml', 'smoke/03-arabic.yaml'],
   business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml', 'business/03-reject-order.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
@@ -310,7 +310,7 @@ function buildWeb() {
     cwd: APP_DIR,
     stdio: 'inherit',
     shell: process.platform === 'win32',
-    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL },
+    env: { ...process.env, CI: '1', EXPO_PUBLIC_API_BASE_URL: API_URL, EXPO_PUBLIC_DEFAULT_LOCALE: process.env.E2E_LOCALE ?? 'en' },
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }

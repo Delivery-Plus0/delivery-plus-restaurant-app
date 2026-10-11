@@ -23,6 +23,7 @@ import { clearSession, useAuthSession } from '@/services/session';
 import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant, useTodaySummary } from '@/state/restaurant';
 import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
+import { LOCALE_NAMES, setLocale, t, useLocale } from '@/i18n';
 
 /** Three lanes side by side from here; two below it; one on phones. */
 const WIDE = 1024;
@@ -41,6 +42,7 @@ export default function HomeScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const hideNotice = useCallback(() => setNotice(null), []);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const otherLocale = useLocale() === 'ar' ? 'en' : 'ar';
 
   async function signOut() {
     setConfirmingSignOut(false);
@@ -59,9 +61,22 @@ export default function HomeScreen() {
   return (
     <Screen>
       <ScreenHeader
-        title={restaurant?.name ?? 'Delivery Plus Restaurant'}
+        title={restaurant?.name ?? t('Delivery Plus Restaurant')}
         subtitle={session?.user.email}
-        right={<AppButton testID="sign-out" title="Sign out" icon="logout" variant="ghost" size="sm" onPress={() => setConfirmingSignOut(true)} />}
+        right={
+          <View style={styles.headerActions}>
+            {/* #151: switches to the other language; always in view, unlike a control below the board. */}
+            <AppButton
+              testID={`language-${otherLocale}`}
+              title={LOCALE_NAMES[otherLocale]}
+              variant="ghost"
+              size="sm"
+              fullWidth={false}
+              onPress={() => void setLocale(otherLocale)}
+            />
+            <AppButton testID="sign-out" title={t('Sign out')} icon="logout" variant="ghost" size="sm" fullWidth={false} onPress={() => setConfirmingSignOut(true)} />
+          </View>
+        }
       />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -73,8 +88,8 @@ export default function HomeScreen() {
         ) : !restaurant ? (
           <StateView
             icon="store"
-            title="No restaurant linked to this account"
-            message="Ask an administrator to connect your owner account to a restaurant."
+            title={t('No restaurant linked to this account')}
+            message={t('Ask an administrator to connect your owner account to a restaurant.')}
             testID="restaurants-empty"
           />
         ) : (
@@ -90,15 +105,15 @@ export default function HomeScreen() {
             <View style={styles.boardHeader}>
               <View style={styles.flex}>
                 <ThemedText type="subtitle" accessibilityRole="header">
-                  Kitchen orders
+                  {t('Kitchen orders')}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  New paid orders appear here automatically. This screen checks every {ORDERS_POLL_MS / 1000} seconds.
+                  {t('New paid orders appear here automatically. This screen checks every {seconds} seconds.', { seconds: ORDERS_POLL_MS / 1000 })}
                 </ThemedText>
               </View>
               <AppButton
                 testID="orders-refresh"
-                title="Refresh"
+                title={t('Refresh')}
                 icon="refresh"
                 variant="secondary"
                 size="sm"
@@ -114,7 +129,7 @@ export default function HomeScreen() {
               <ErrorState error={orders.error} onRetry={() => void orders.refresh()} />
             ) : (
               <>
-                {orders.error ? <InlineAlert message="Couldn't refresh the orders. Showing the last ones loaded." testID="orders-stale" /> : null}
+                {orders.error ? <InlineAlert message={t("Couldn't refresh the orders. Showing the last ones loaded.")} testID="orders-stale" /> : null}
                 <View style={styles.board}>
                   {KITCHEN_LANES.map((lane) => (
                     <View key={lane.status} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
@@ -133,7 +148,7 @@ export default function HomeScreen() {
                       ) : (
                         <View style={styles.emptyLane}>
                           <ThemedText type="small" themeColor="textSecondary">
-                            Nothing here
+                            {t('Nothing here')}
                           </ThemedText>
                         </View>
                       )}
@@ -145,7 +160,7 @@ export default function HomeScreen() {
                   <View style={styles.other}>
                     <AppButton
                       testID="orders-toggle-other"
-                      title={showOther ? 'Hide other orders' : `Show other orders (${other.length})`}
+                      title={showOther ? t('Hide other orders') : t('Show other orders ({count})', { count: other.length })}
                       variant="ghost"
                       size="sm"
                       fullWidth={false}
@@ -181,9 +196,9 @@ export default function HomeScreen() {
       <Toast message={notice} onHide={hideNotice} testID="board-notice" />
       <Dialog
         visible={confirmingSignOut}
-        title="Sign out?"
-        message="You can sign back in at any time."
-        confirmLabel="Sign out"
+        title={t('Sign out?')}
+        message={t('You can sign back in at any time.')}
+        confirmLabel={t('Sign out')}
         onConfirm={() => void signOut()}
         onCancel={() => setConfirmingSignOut(false)}
         testID="sign-out-dialog"
@@ -225,7 +240,7 @@ function RestaurantCard({ restaurant, counts, today }: { restaurant: Restaurant;
       {/* Today in Cairo, from the backend (#154): item revenue only, without delivery fees or cancelled orders. */}
       <View style={styles.today} testID="today-summary" nativeID="today-summary">
         <ThemedText type="caption" themeColor="textSecondary" style={styles.flex}>
-          Today
+          {t('Today')}
         </ThemedText>
         <ThemedText type="smallBold" testID="today-orders">
           {today ? `${today.orders} ${today.orders === 1 ? 'order' : 'orders'}` : '…'}
@@ -277,9 +292,9 @@ function KitchenOrder({
     setError(null);
     try {
       await advanceOrder(restaurantId, order.id, status);
-      onDone(`Order ${shortId(order.id)} is now ${ORDER_STATUS_META[status].label}.`);
+      onDone(t('Order {id} is now {status}.', { id: shortId(order.id), status: ORDER_STATUS_META[status].label }));
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'That did not go through. Check your connection and try again.');
+      setError(caught instanceof ApiError ? caught.message : t('That did not go through. Check your connection and try again.'));
     } finally {
       inFlight.current = false;
       setIsActing(false);
@@ -290,6 +305,11 @@ function KitchenOrder({
 }
 
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
   content: {
     padding: Spacing.three,
     gap: Spacing.three,

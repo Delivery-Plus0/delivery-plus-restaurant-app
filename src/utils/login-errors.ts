@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/api';
+import { t } from '@/i18n/core';
 
 /** auth-service locks an account after this many failed sign-ins in a row (MAX_FAILED_LOGIN_ATTEMPTS). */
 export const LOCKOUT_ATTEMPTS = 5;
@@ -13,15 +14,15 @@ const LOCKOUT_HINT_AFTER = 3;
  * can only say what to check and, after repeated failures, that a lock may be the reason.
  */
 export function describeLoginError(error: unknown, consecutiveFailures: number): string {
-  if (!(error instanceof ApiError)) return 'Unable to sign in right now.';
+  if (!(error instanceof ApiError)) return t('Unable to sign in right now.');
 
   if (error.statusCode === 401) {
-    const base = 'Email or password is incorrect. Check for typos, or create an account if you are new.';
+    const base = t('Email or password is incorrect. Check for typos, or create an account if you are new.');
     return consecutiveFailures >= LOCKOUT_HINT_AFTER
       ? `${base} After ${LOCKOUT_ATTEMPTS} failed attempts in a row, sign-in is paused for 15 minutes.`
       : base;
   }
-  if (error.statusCode === 429) return 'Too many sign-in attempts. Wait a minute, then try again.';
+  if (error.statusCode === 429) return t('Too many sign-in attempts. Wait a minute, then try again.');
   // Network failures and everything else already carry a readable message from the API client.
   return error.message;
 }

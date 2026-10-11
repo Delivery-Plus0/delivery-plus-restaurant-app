@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Icon } from '@/components/ui/icon';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { toastDurationMs, type ToastTone } from '@/utils/toast';
+import { t } from '@/i18n';
 
 type ToastProps = {
   /** The message to show; null hides the toast. */
@@ -37,7 +38,7 @@ export function Toast({ message, tone = 'success', onHide, testID = 'toast' }: T
         style={[styles.toast, { backgroundColor: style.background }]}
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
-        accessibilityHint="Tap to dismiss"
+        accessibilityHint={t('Tap to dismiss')}
         testID={testID}
         nativeID={testID}>
         <Icon name={style.icon} size={IconSize.sm} color={style.text} />

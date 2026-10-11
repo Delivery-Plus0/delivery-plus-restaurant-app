@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type SkeletonProps = {
   width?: DimensionValue;
@@ -41,7 +42,7 @@ export function Skeleton({ width = '100%', height = 14, radius = Radius.sm, styl
 /** A list of card-shaped skeletons for list screens while the first page loads. */
 export function SkeletonList({ count = 4, itemHeight = 88 }: { count?: number; itemHeight?: number }) {
   return (
-    <View style={styles.list} accessibilityLabel="Loading" accessibilityRole="progressbar">
+    <View style={styles.list} accessibilityLabel={t('Loading')} accessibilityRole="progressbar">
       {Array.from({ length: count }, (_, index) => (
         <View key={index} style={styles.card}>
           <Skeleton width={itemHeight - Spacing.four} height={itemHeight - Spacing.four} radius={Radius.sm} />

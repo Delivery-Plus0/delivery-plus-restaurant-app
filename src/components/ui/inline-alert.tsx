@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Icon } from '@/components/ui/icon';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 type InlineAlertProps = {
   message: string;
@@ -32,7 +33,7 @@ export function InlineAlert({ message, tone = 'danger', onDismiss, testID }: Inl
         {message}
       </ThemedText>
       {onDismiss ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Dismiss" hitSlop={8} onPress={onDismiss}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Dismiss')} hitSlop={8} onPress={onDismiss}>
           <Icon name="close" size={IconSize.sm} color={colors.color} />
         </Pressable>
       ) : null}

@@ -25,6 +25,7 @@ import {
 import { pickImage, uploadToPresigned } from '@/utils/image-upload';
 import { reloadMenu } from '@/state/restaurant';
 import { DESCRIPTION_MAX, NAME_MAX, draftFromItem, parsePrice, sortCategories, validateItemDraft, type ItemDraftInput } from '@/utils/menu-editor';
+import { t } from '@/i18n';
 
 const errorMessage = (caught: unknown, fallback: string) => (caught instanceof ApiError ? caught.message : fallback);
 
@@ -64,9 +65,9 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
       if (item) await updateMenuItem(item.id, payload);
       else await createMenuItem(restaurantId, payload);
       await reloadMenu(restaurantId);
-      onDone(item ? `Saved ${payload.name}` : `Added ${payload.name} to the menu`);
+      onDone(item ? t('Saved {name}', { name: payload.name }) : t('Added {name} to the menu', { name: payload.name }));
     } catch (caught) {
-      setError(errorMessage(caught, 'Could not save this item. Try again.'));
+      setError(errorMessage(caught, t('Could not save this item. Try again.')));
     } finally {
       setSaving(false);
     }
@@ -80,9 +81,9 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
     try {
       await archiveMenuItem(item.id);
       await reloadMenu(restaurantId);
-      onDone(`Archived ${item.name}`);
+      onDone(t('Archived {name}', { name: item.name }));
     } catch (caught) {
-      setError(errorMessage(caught, 'Could not archive this item. Try again.'));
+      setError(errorMessage(caught, t('Could not archive this item. Try again.')));
     } finally {
       setSaving(false);
     }
@@ -94,16 +95,16 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
     <Sheet visible title={item ? `Edit ${item.name}` : 'New menu item'} onClose={onClose} testID="item-editor">
       <FormTextInput
         testID="item-editor-name"
-        label="Name"
+        label={t('Name')}
         value={draft.name}
         onChangeText={(name) => set({ name })}
         maxLength={NAME_MAX + 20}
         error={show('name')}
-        placeholder="Koshary"
+        placeholder={t('Koshary')}
       />
       <FormTextInput
         testID="item-editor-description"
-        label="Description (optional)"
+        label={t('Description (optional)')}
         value={draft.description}
         onChangeText={(description) => set({ description })}
         maxLength={DESCRIPTION_MAX + 50}
@@ -112,7 +113,7 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
       />
       <FormTextInput
         testID="item-editor-price"
-        label="Price (EGP)"
+        label={t('Price (EGP)')}
         value={draft.price}
         onChangeText={(price) => set({ price })}
         keyboardType="decimal-pad"
@@ -121,7 +122,7 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
       />
       {categories.length ? (
         <View style={styles.field}>
-          <ThemedText type="smallBold">Category</ThemedText>
+          <ThemedText type="smallBold">{t('Category')}</ThemedText>
           <View style={styles.chips} accessibilityRole="radiogroup">
             {sortCategories(categories).map((category) => {
               const selected = draft.categoryId === category.id;
@@ -145,19 +146,19 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
       ) : null}
       {item ? <ItemPhoto restaurantId={restaurantId} item={item} /> : (
         <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-hint">
-          Save the item first, then add a photo.
+          {t('Save the item first, then add a photo.')}
         </ThemedText>
       )}
       {error ? <InlineAlert message={error} testID="item-editor-error" /> : null}
       <AppButton testID="item-editor-save" title={item ? 'Save changes' : 'Add to menu'} loading={saving} onPress={() => void save()} />
       {item ? (
-        <AppButton testID="item-editor-archive" title="Archive item" variant="danger" disabled={saving} onPress={() => setConfirmingArchive(true)} />
+        <AppButton testID="item-editor-archive" title={t('Archive item')} variant="danger" disabled={saving} onPress={() => setConfirmingArchive(true)} />
       ) : null}
       <Dialog
         visible={confirmingArchive}
-        title={`Archive ${item?.name ?? 'this item'}?`}
-        message="Customers stop seeing it and can't order it. Past orders keep it. This can't be undone from the app yet."
-        confirmLabel="Archive"
+        title={item ? t('Archive {name}?', { name: item.name }) : t('Archive this item?')}
+        message={t("Customers stop seeing it and can't order it. Past orders keep it. This can't be undone from the app yet.")}
+        confirmLabel={t('Archive')}
         destructive
         onConfirm={() => void archive()}
         onCancel={() => setConfirmingArchive(false)}
@@ -192,7 +193,7 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
       setCurrent(updated.images ?? []);
       await reloadMenu(restaurantId);
     } catch (caught) {
-      setError(errorMessage(caught, caught instanceof Error ? caught.message : 'Could not upload this photo.'));
+      setError(errorMessage(caught, caught instanceof Error ? caught.message : t('Could not upload this photo.')));
     } finally {
       setBusy(null);
     }
@@ -207,7 +208,7 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
       setCurrent(updated.images ?? []);
       await reloadMenu(restaurantId);
     } catch (caught) {
-      setError(errorMessage(caught, 'Could not remove this photo.'));
+      setError(errorMessage(caught, t('Could not remove this photo.')));
     } finally {
       setBusy(null);
     }
@@ -215,14 +216,14 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
 
   return (
     <View style={styles.field} testID="item-editor-photo" nativeID="item-editor-photo">
-      <ThemedText type="smallBold">Photo</ThemedText>
+      <ThemedText type="smallBold">{t('Photo')}</ThemedText>
       {primary ? (
         <View testID="item-editor-photo-image" nativeID="item-editor-photo-image">
-          <Image source={{ uri: primary.url }} style={styles.photo} contentFit="cover" accessibilityLabel={`Photo of ${item.name}`} />
+          <Image source={{ uri: primary.url }} style={styles.photo} contentFit="cover" accessibilityLabel={t('Photo of {name}', { name: item.name })} />
         </View>
       ) : (
         <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-empty">
-          No photo yet. Customers see a placeholder.
+          {t('No photo yet. Customers see a placeholder.')}
         </ThemedText>
       )}
       {busy ? (
@@ -234,7 +235,7 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
       <View style={styles.photoActions}>
         <AppButton
           testID="item-editor-photo-pick"
-          title={primary ? 'Replace photo' : 'Add photo'}
+          title={primary ? t('Replace photo') : t('Add photo')}
           variant="secondary"
           size="sm"
           loading={busy === 'uploading'}
@@ -242,7 +243,7 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
           onPress={() => void change()}
         />
         {primary ? (
-          <AppButton testID="item-editor-photo-remove" title="Remove photo" variant="ghost" size="sm" disabled={busy !== null} onPress={() => void remove()} />
+          <AppButton testID="item-editor-photo-remove" title={t('Remove photo')} variant="ghost" size="sm" disabled={busy !== null} onPress={() => void remove()} />
         ) : null}
       </View>
     </View>
@@ -264,7 +265,7 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const trimmed = name.trim();
-  const nameError = !trimmed ? 'Enter a name' : trimmed.length > NAME_MAX ? `Keep the name under ${NAME_MAX} characters` : undefined;
+  const nameError = !trimmed ? t('Enter a name') : trimmed.length > NAME_MAX ? t('Keep the name under {max} characters', { max: NAME_MAX }) : undefined;
 
   async function save() {
     setSubmitted(true);
@@ -275,9 +276,9 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
       if (category) await renameCategory(category.id, trimmed);
       else await createCategory(restaurantId, trimmed, nextDisplayOrder);
       await reloadMenu(restaurantId);
-      onDone(category ? `Renamed to ${trimmed}` : `Added the ${trimmed} category`);
+      onDone(category ? t('Renamed to {name}', { name: trimmed }) : t('Added the {name} category', { name: trimmed }));
     } catch (caught) {
-      setError(errorMessage(caught, 'Could not save this category. Try again.'));
+      setError(errorMessage(caught, t('Could not save this category. Try again.')));
     } finally {
       setSaving(false);
     }
@@ -287,11 +288,11 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
     <Sheet visible title={category ? 'Rename category' : 'New category'} onClose={onClose} testID="category-editor">
       <FormTextInput
         testID="category-editor-name"
-        label="Name"
+        label={t('Name')}
         value={name}
         onChangeText={setName}
         error={submitted ? nameError : undefined}
-        placeholder="Mains"
+        placeholder={t('Mains')}
         onSubmitEditing={() => void save()}
       />
       {error ? <InlineAlert message={error} testID="category-editor-error" /> : null}

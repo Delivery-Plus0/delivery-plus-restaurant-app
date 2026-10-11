@@ -1,3 +1,4 @@
+import { t } from '@/i18n/core';
 /** Egyptian mobile networks: 010 Vodafone, 011 Etisalat (e&), 012 Orange, 015 WE. */
 const NATIONAL_MOBILE = /^1[0125]\d{8}$/;
 
@@ -32,7 +33,7 @@ export const PHONE_HINT = 'Egyptian mobile, e.g. 010 1234 5678';
 /** Validation for an optional phone field: empty is fine, anything else must be an Egyptian mobile. */
 export function phoneError(value: string): string | undefined {
   if (!value.trim()) return undefined;
-  return normalizeEgyptianMobile(value) ? undefined : EGYPTIAN_MOBILE_MESSAGE;
+  return normalizeEgyptianMobile(value) ? undefined : t(EGYPTIAN_MOBILE_MESSAGE);
 }
 
 /** "+20 101 234 5678" for display; anything else is shown as stored. */
