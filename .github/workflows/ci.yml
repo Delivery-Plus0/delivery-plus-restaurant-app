@@ -35,6 +35,10 @@ jobs:
       - name: Lint (zero warnings)
         run: npm run lint
 
+      # Shared UI kit (#155): identical in all three apps, against the canonical manifest in the backend repo.
+      - name: Shared kit in sync
+        run: npm run kit:check -- --remote
+
       - name: Unit tests
         run: npm test
 

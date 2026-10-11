@@ -31,6 +31,8 @@ const icons = {
   logout: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
   error: { ios: 'exclamationmark.circle', android: 'error_outline', web: 'error_outline' },
   offline: { ios: 'wifi.slash', android: 'cloud_off', web: 'cloud_off' },
+  wallet: { ios: 'creditcard', android: 'account_balance_wallet', web: 'account_balance_wallet' },
+  directions: { ios: 'arrow.triangle.turn.up.right.diamond', android: 'directions', web: 'directions' },
 } as const satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
 
 export type IconName = keyof typeof icons;
