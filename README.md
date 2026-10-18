@@ -1,8 +1,35 @@
-# Delivery Plus — Restaurant App
+<p align="center">
+  <img src="./identity/app-icon.png" alt="Delivery Plus app icon" width="72">
+  &nbsp;&nbsp;
+  <img src="./identity/delivery-plus-logo.png" alt="Delivery Plus" width="300">
+</p>
 
-The restaurant-owner client of **Delivery Plus**, a food-delivery platform. Owners see their kitchen's orders and move each paid order from *new* to *preparing* to *ready for pickup* (the backend then dispatches a driver automatically), and control whether the restaurant takes orders and which items are sold out.
+<h1 align="center">Delivery Plus Restaurant App</h1>
+
+<p align="center">Manage kitchen orders, menu availability and restaurant status from one dashboard.</p>
+
+<p align="center">
+  <strong>DELIVERY PLUS</strong>
+  &nbsp; × &nbsp;
+  <a href="https://expo.dev"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo&logoColor=white" alt="Built with Expo 57"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Delivery-Plus0/delivery-plus-restaurant-app"><img src="https://img.shields.io/badge/GitHub-Restaurant%20App-181717?logo=github&logoColor=white" alt="Restaurant app on GitHub"></a>
+  <img src="https://img.shields.io/badge/React%20Native-0.86-20232A?logo=react&logoColor=61DAFB" alt="React Native 0.86">
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Web-ready-2E7D32" alt="Android, iOS and web">
+</p>
 
 Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first (desktop and narrow browser widths), on the same foundation and design system as the [customer app](https://github.com/Delivery-Plus0/delivery-plus-customer-app) and the [driver app](https://github.com/Delivery-Plus0/delivery-plus-driver-app): API client, session handling, `useResource` cache and polling, UI kit and theme, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (issue #100).
+
+## App gallery
+
+<p align="center">
+  <a href="./identity/mobile-screens.png"><img src="./identity/mobile-screens.png" alt="Four rounded phone mockups showing restaurant kitchen board, menu management, order details and menu item" width="850"></a>
+</p>
+
+Four real screens from the running app, presented in rounded phone frames. Captured at phone width from the web build with seeded QA data.
 
 ## Features (MVP)
 
