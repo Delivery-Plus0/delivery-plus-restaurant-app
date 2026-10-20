@@ -148,4 +148,14 @@ export const Elevation = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+
+/**
+ * Bottom tab bar (#53, #45): room for the icon and a full line of label text in both languages. On the web
+ * React Navigation's 49 px tab item shrank the label (the last flex child) to about 11 px, cutting its
+ * lower half. The label no longer shrinks, and the web bar is tall enough for icon + label.
+ */
+export const TabBar = {
+  style: Platform.select({ web: { height: 64, paddingTop: 4, paddingBottom: 4 }, default: {} }),
+  labelStyle: { fontSize: 12, lineHeight: 18, fontWeight: '600' as const, flexShrink: 0 },
+} as const;
 export const MaxContentWidth = 800;

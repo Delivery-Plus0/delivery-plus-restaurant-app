@@ -1,3 +1,5 @@
+import type { ArabicPluralForms } from './core';
+
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
   // Tabs
@@ -154,4 +156,16 @@ export const appArabic: Readonly<Record<string, string>> = {
   Password: 'كلمة المرور',
   'Your password': 'كلمة المرور',
   'Sign in': 'تسجيل الدخول',
+};
+
+/** #27: counted nouns for tn(), keyed by the English plural; Arabic needs all six forms. */
+export const appArabicPlurals: Readonly<Record<string, ArabicPluralForms>> = {
+  '{count} orders': {
+    zero: 'لا طلبات',
+    one: 'طلب واحد',
+    two: 'طلبان',
+    few: '{count} طلبات',
+    many: '{count} طلبًا',
+    other: '{count} طلب',
+  },
 };
