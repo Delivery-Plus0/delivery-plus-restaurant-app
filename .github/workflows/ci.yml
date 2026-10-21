@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # React Native 0.86 supports Node ^20.19.4 || ^22.13.0; 22 matches the backend's CI.
       - uses: actions/setup-node@v4
