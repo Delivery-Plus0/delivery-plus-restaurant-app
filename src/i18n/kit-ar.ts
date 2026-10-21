@@ -48,6 +48,30 @@ export const kitArabic: Readonly<Record<string, string>> = {
     'البريد الإلكتروني أو كلمة المرور غير صحيحة. تحقق من الكتابة، أو أنشئ حسابًا إذا كنت جديدًا.',
   'Too many sign-in attempts. Wait a minute, then try again.': 'محاولات تسجيل دخول كثيرة. انتظر دقيقة ثم حاول مرة أخرى.',
 
+  // Email verification code (backend #203, #252)
+  'Verify your email': 'تأكيد بريدك الإلكتروني',
+  'Enter the 6-digit code we sent to {email}.': 'أدخل الكود المكوّن من 6 أرقام الذي أرسلناه إلى {email}.',
+  'The code works for 10 minutes.': 'الكود صالح لمدة 10 دقائق.',
+  Code: 'الكود',
+  Verify: 'تحقق',
+  'Resend code': 'إعادة إرسال الكود',
+  'Resend code in {seconds} s': 'إعادة الإرسال بعد {seconds} ث',
+  'Back to sign in': 'العودة إلى تسجيل الدخول',
+  'Sign in again to get to your code.': 'سجّل الدخول مرة أخرى للوصول إلى الكود.',
+  'Enter the 6 digits from the email.': 'أدخل الأرقام الستة من البريد الإلكتروني.',
+  'We sent a new code to {email}.': 'أرسلنا كودًا جديدًا إلى {email}.',
+  "That code isn't right. Check the email and try again.": 'الكود غير صحيح. تحقق من البريد الإلكتروني وحاول مرة أخرى.',
+  'This code has expired. Request a new one.': 'انتهت صلاحية هذا الكود. اطلب كودًا جديدًا.',
+  'Too many wrong codes. Request a new one.': 'أُدخلت أكواد خاطئة كثيرة. اطلب كودًا جديدًا.',
+  "That code is wrong or has expired. Request a new one if it's been more than 10 minutes.":
+    'الكود غير صحيح أو انتهت صلاحيته. اطلب كودًا جديدًا إذا مرّ أكثر من 10 دقائق.',
+  'Too many tries. Wait a minute, then try again.': 'محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى.',
+  'Unable to verify right now. Try again.': 'تعذّر التحقق الآن. حاول مرة أخرى.',
+  'Wait a minute before asking for another code.': 'انتظر دقيقة قبل طلب كود آخر.',
+  "Email isn't available right now. Try again later.": 'البريد الإلكتروني غير متاح الآن. حاول مرة أخرى لاحقًا.',
+  'Unable to send a new code right now. Try again.': 'تعذّر إرسال كود جديد الآن. حاول مرة أخرى.',
+  'Email verified. Sign in to continue.': 'تم تأكيد بريدك الإلكتروني. سجّل الدخول للمتابعة.',
+
   // Image uploads
   'Choose a JPEG, PNG or WebP image.': 'اختر صورة بصيغة JPEG أو PNG أو WebP.',
   'Choose an image under {mb} MB.': 'اختر صورة أصغر من {mb} ميجابايت.',

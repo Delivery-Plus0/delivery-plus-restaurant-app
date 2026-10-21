@@ -54,3 +54,26 @@ Signing in returns an access token (a JWT that lasts 15 minutes) and a single-us
 - **Why it ended:** while `ended` is set, the root layout covers the app with `SessionEndedScreen` ("You have been signed out" or "Your account is suspended"). Its button calls `acknowledgeSessionEnded()`, and the signed-out screens show. A new sign-in clears `ended`.
 - **Signing out:** call `signOut()` from `services/api.ts`, not `clearSession()`. It ends the session on the server (`POST /api/auth/logout`), then forgets both tokens, even when offline.
 - **Long-lived connections** (Server-Sent Events) don't go through the API client. On a `401` they call `refreshSession()` themselves and connect again with the new token.
+
+## Email verification
+
+While the backend requires a verified email (`EMAIL_VERIFICATION_REQUIRED`, backend #203), sign-up returns no tokens, and the kit's `app/(auth)/verify-email.tsx` screen takes the 6-digit emailed code.
+
+- **Getting there:** call `startEmailVerification(email, sentAt)` from `utils/email-verification.ts`, then go to `/verify-email`.
+  - After sign-up, `sentAt` is when register was called: registering sent the code.
+  - After a sign-in refused with `403 EmailNotVerified` (`isEmailNotVerified(error)`, backend #252), `sentAt` is `null`: the app doesn't know when the code went out.
+- **Privacy:** the email is kept in memory only, never in the URL or storage, and the password isn't kept at all. A reload of the code screen offers sign-in again.
+- **Errors:** the server answers every refused code with the same `401`, so it never reveals which emails have accounts. `describeCodeRefusal` tells the cases apart from the rules it mirrors: a code lasts 10 minutes, and the 5th wrong code ends it.
+  - wrong;
+  - expired (only when `sentAt` is known);
+  - too many wrong codes;
+  - "wrong or expired" when `sentAt` is unknown;
+  - `429` and offline.
+
+  After an expired code or too many wrong ones, Verify waits for a new code.
+- **Resend:** `resendEmailCode` waits out the 60-second cooldown from the last known send; a `429` restarts it. The email comes in the app's language (`Accept-Language`).
+- **Afterwards:** the screen goes to `/login`. The sign-in screen reads `takeVerifiedEmail()` to fill in the email and say "Email verified. Sign in to continue."
+- **Test ids:**
+  - `verify-email-screen`, `verify-email-code`, `verify-email-submit`, `verify-email-resend`;
+  - `verify-email-error`, `verify-email-notice`;
+  - `verify-email-back`, `verify-email-restart`.

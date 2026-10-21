@@ -1,0 +1,86 @@
+url: ${APP_URL}
+name: Signing in to an unverified account opens the code screen; a new code verifies it
+tags:
+  - verification
+---
+# An account that registered but never entered its code.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: verification/new-email
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: verification/register-unverified
+- openLink: ${APP_URL}/login
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+- tapOn:
+    id: login-email
+- inputText: ${output.control.newEmail}
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login-submit
+
+# 403 EmailNotVerified: the code screen instead of "incorrect password". The app doesn't know when
+# the first code was sent, so Resend is offered straight away.
+- extendedWaitUntil:
+    visible:
+      id: verify-email-screen
+    timeout: 20000
+- assertVisible: 'Enter the 6-digit code we sent to .*e2e\.code\..*'
+- assertNotVisible:
+    id: login-error
+
+# Registering sent a code moments ago, so the server refuses another within the minute (429): the
+# app says so and starts the countdown.
+- tapOn:
+    id: verify-email-resend
+- extendedWaitUntil:
+    visible:
+      id: verify-email-error
+    timeout: 15000
+- assertVisible: 'Wait a minute before asking for another code\.'
+- assertVisible: 'Resend code in [0-9]+ s'
+
+# Once the countdown ends, a new code is sent.
+- extendedWaitUntil:
+    visible: 'Resend code'
+    timeout: 75000
+- tapOn:
+    id: verify-email-resend
+- extendedWaitUntil:
+    visible:
+      id: verify-email-notice
+    timeout: 15000
+- assertVisible: 'We sent a new code to .*'
+- assertVisible: 'Resend code in [0-9]+ s'
+
+# The new code verifies the email, and sign-in reaches the app.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: verification/read-email-code
+- tapOn:
+    id: verify-email-code
+- inputText: ${output.control.code}
+- tapOn:
+    id: verify-email-submit
+- extendedWaitUntil:
+    visible:
+      id: login-notice
+    timeout: 15000
+- tapOn:
+    id: login-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: login-submit
+# A new owner with no restaurant yet lands on the empty board.
+- extendedWaitUntil:
+    visible:
+      id: restaurants-empty
+    timeout: 20000
