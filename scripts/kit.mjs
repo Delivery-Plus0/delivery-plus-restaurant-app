@@ -20,6 +20,7 @@ const REMOTE_MANIFEST = 'https://raw.githubusercontent.com/Delivery-Plus0/delive
 /** The kit. Adding a file here means adding it, identical, to all three apps. */
 export const KIT_FILES = [
   'src/components/auth-form-shell.tsx',
+  'src/components/session-ended.tsx',
   'src/components/themed-text.tsx',
   'src/components/ui/app-button.tsx',
   'src/components/ui/badge.tsx',
@@ -48,7 +49,10 @@ export const KIT_FILES = [
   'src/i18n/index.ts',
   'src/i18n/kit-ar.ts',
   'src/services/api.errors.test.ts',
+  'src/services/api.test.ts',
   'src/services/api.ts',
+  'src/services/session.test.ts',
+  'src/services/session.ts',
   'src/state/resource-cache.test.ts',
   'src/state/resource-cache.ts',
   'src/types/expo.d.ts',

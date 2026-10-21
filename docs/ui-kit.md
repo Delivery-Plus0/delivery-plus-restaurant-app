@@ -40,3 +40,17 @@ Use `tn(count, '{count} order', '{count} orders')`, never `count === 1 ? 'order'
 - Add the six Arabic forms to `appArabicPlurals` in `src/i18n/ar.ts`, keyed by the English plural: `zero` (0), `one` (1), `two` (2), `few` (3–10), `many` (11–99), `other` (100+).
 - The coverage test fails when a `tn()` text is missing a form, or when the code builds a counted noun from pieces.
 - To show a formatted number, pass it as `count`: `tn(n, '{count} order', '{count} orders', { count: formatted })`.
+
+## Sessions
+
+Signing in returns an access token (a JWT that lasts 15 minutes) and a single-use refresh token (backend #34). `services/session.ts` keeps both: in `expo-secure-store` on native, and in `localStorage` on the web, where the backend sends no cookie.
+
+- **Signing in:** call `setSession(accessToken, refreshToken)` with what login (or register) returned.
+- **An expired access token:** the API client handles it, so screens don't. A `401` on an authenticated call runs `refreshSession()` and replays the call once with the new token.
+  - Concurrent `401`s share one refresh. The refresh token works only once, and sending it twice would end the session as stolen.
+  - Offline, a `429` or a `5xx` keeps the session; the call fails as usual and the next one tries again.
+  - A refused refresh, or a second `401` after the replay, ends the session with `ended: 'expired'`.
+- **A suspended account:** a `403 AccountSuspended` (sign-in, refresh or any call, backend #202) ends the session with `ended: 'suspended'`.
+- **Why it ended:** while `ended` is set, the root layout covers the app with `SessionEndedScreen` ("You have been signed out" or "Your account is suspended"). Its button calls `acknowledgeSessionEnded()`, and the signed-out screens show. A new sign-in clears `ended`.
+- **Signing out:** call `signOut()` from `services/api.ts`, not `clearSession()`. It ends the session on the server (`POST /api/auth/logout`), then forgets both tokens, even when offline.
+- **Long-lived connections** (Server-Sent Events) don't go through the API client. On a `401` they call `refreshSession()` themselves and connect again with the new token.

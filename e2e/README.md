@@ -30,11 +30,19 @@ npm run e2e:all -- --headless
 `--build` always exports with `--clear`: a warm Metro cache can keep a previously inlined
 `EXPO_PUBLIC_API_BASE_URL`. The suites can be re-run without a reset: every flow creates its own order.
 
+**Sessions (#34).** The `session` suite stays signed in for six minutes of 60-second access tokens, then signs out. It needs a stack started with short tokens, and refuses to run otherwise:
+
+```bash
+JWT_EXPIRES_IN=60s npm run e2e:env:up   # in ../delivery-plus (or restart only auth-service with it)
+npm run e2e:session -- --headless
+```
+
 ## Suites
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
 | `smoke` | owner signs in → QA Kitchen (open) is shown → a new paid order is in "New orders" with its total and the *Start preparing* action · Menu tab: QA Fries → *Sold out* (checked on the public menu) → back; restaurant → *Busy* (checked on the public restaurant) → *Open* | every PR |
+| `session` | **60-second access tokens:** signed in for six minutes, reloading the board after every token expiry (five refreshes) · sign out → sign-in screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
 | `business` | no driver free → a new paid order → *Start preparing* → "In kitchen" → *Ready for pickup* → "Ready for pickup" (no further action) → automatic dispatch created the delivery | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)

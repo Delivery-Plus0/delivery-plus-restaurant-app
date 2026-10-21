@@ -1,0 +1,39 @@
+url: ${APP_URL}
+name: Owner stays signed in for 6 minutes of 60-second access tokens
+tags:
+  - session
+---
+# Runs with JWT_EXPIRES_IN=60s (the runner refuses longer tokens for this suite). Each round waits
+# past the token's lifetime, then reloads the board, which needs the API: the app starts from the
+# stored pair, gets a 401, refreshes once and replays (#34). Five rounds rotate the refresh token five times.
+- runFlow: ../_shared/login.yaml
+- repeat:
+    times: 5
+    commands:
+      # Only a wait: the screen shows if the session ends, and the assertion below fails then.
+      - extendedWaitUntil:
+          visible:
+            id: session-ended
+          timeout: 70000
+          optional: true
+      - assertNotVisible:
+          id: session-ended
+      - openLink: ${APP_URL}/home
+      - extendedWaitUntil:
+          visible:
+            id: restaurant-heading
+          timeout: 20000
+      - runFlow:
+          when:
+            visible:
+              id: restaurant-select-${RESTAURANT_ID}
+          commands:
+            - tapOn:
+                id: restaurant-select-${RESTAURANT_ID}
+      - extendedWaitUntil:
+          visible: 'QA Kitchen'
+          timeout: 10000
+- assertNotVisible:
+    id: session-ended
+- assertNotVisible:
+    id: login-email

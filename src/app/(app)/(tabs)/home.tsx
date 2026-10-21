@@ -16,10 +16,10 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { Toast } from '@/components/ui/toast';
 import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
-import { ApiError } from '@/services/api';
+import { ApiError, signOut as endSession } from '@/services/api';
 import type { KitchenStatus, RestaurantOrder, TodaySummary } from '@/services/restaurant-orders';
 import type { Restaurant } from '@/services/restaurants';
-import { clearSession, useAuthSession } from '@/services/session';
+import { useAuthSession } from '@/services/session';
 import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant, useTodaySummary } from '@/state/restaurant';
 import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
@@ -47,7 +47,7 @@ export default function HomeScreen() {
 
   async function signOut() {
     setConfirmingSignOut(false);
-    await clearSession();
+    await endSession();
   }
 
   async function refreshAll() {
