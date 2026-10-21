@@ -44,6 +44,6 @@
     "src/utils/toast.test.ts": "75f74915a5fe6e6c5b69686b0aef64164148704ec9f0647aac0813a09c719883",
     "src/utils/toast.ts": "584e6da074e32202543bfaf4f5dbc3438b007c501097df72d014e88b50e44963",
     "scripts/kit.mjs": "9eb5ab0beac5996be3c478856cf662aa5e6a4735c7e9542cc0febf37c13378f9",
-    "docs/ui-kit.md": "a37cf397fba24127f76383d257c381919757c3e0a3fd48b49449e3e06fbd03c5"
+    "docs/ui-kit.md": "35dad315a711f7faaa74d9645d7331793b23c6dd0a17658cf9e7820cf649497f"
   }
 }
