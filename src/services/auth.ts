@@ -1,4 +1,5 @@
 import { apiGet, apiPost, type ErrorResponse } from '@/services/api';
+import { emailLanguageHeaders } from '@/services/email-verification';
 
 export type UserRole = 'CUSTOMER' | 'RESTAURANT_OWNER' | 'DRIVER' | 'ADMIN';
 
@@ -40,7 +41,8 @@ export type JwtUser = {
 export type AuthApiError = ErrorResponse;
 
 export async function registerAccount(payload: RegisterRequest): Promise<AuthResponse | VerificationPendingResponse> {
-  return apiPost<AuthResponse | VerificationPendingResponse>('/api/auth/register', payload, false);
+  // The verification email, when one is sent, comes in the app's language.
+  return apiPost<AuthResponse | VerificationPendingResponse>('/api/auth/register', payload, false, emailLanguageHeaders());
 }
 
 export async function loginAccount(payload: LoginRequest): Promise<AuthResponse> {

@@ -43,6 +43,8 @@ const SUITES = {
   business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml', 'business/03-reject-order.yaml'],
   // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
   session: ['session/stay-signed-in.yaml', 'session/sign-out.yaml'],
+  // #38: needs EMAIL_VERIFICATION_REQUIRED=true on auth-service (backend #252), so it is not part of `all`.
+  verification: ['verification/unverified-sign-in.yaml'],
 };
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
@@ -111,6 +113,39 @@ async function login(email) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/**
+ * The verification suite needs the stack to require email verification: a new account must get no
+ * tokens. Refuse a stack where it is off rather than pass without testing the code screen.
+ */
+async function requireEmailVerification() {
+  resetRateLimits();
+  const probe = await api('POST', '/api/auth/register', null, {
+    email: `e2e.verify-probe.${Date.now()}@example.com`,
+    password: manifest.password,
+    fullName: 'E2E Verify Probe',
+    role: 'RESTAURANT_OWNER',
+  });
+  if (probe?.verificationRequired !== true) {
+    if (probe?.refreshToken) await api('POST', '/api/auth/logout', null, { refreshToken: probe.refreshToken }).catch(() => undefined);
+    throw new Error(
+      'The verification suite needs email verification on. Restart auth-service with `EMAIL_VERIFICATION_REQUIRED=true` ' +
+        '(docker compose -p delivery-plus-e2e … up -d --no-deps auth-service; delivery-plus#252).',
+    );
+  }
+  console.log('Verification suite: new accounts wait for their email code.');
+}
+
+/** The code the test email sender (EMAIL_PROVIDER=test) kept for `email`; never sent anywhere. */
+function readEmailCode(email) {
+  const stored = execFileSync('docker', ['exec', container('redis'), 'redis-cli', 'GET', `test:email:${email}`], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+  const code = stored ? /\b(\d{6})\b/.exec(JSON.parse(stored).text ?? '')?.[1] : undefined;
+  if (!code) throw new Error(`No verification email was sent to ${email}`);
+  return code;
+}
+
 const state = { orderId: null, awaitingDriver: false };
 
 async function waitForOrderStatus(orderId, token, statuses, timeoutMs = 20_000) {
@@ -205,6 +240,20 @@ const EDITOR_CATEGORY = 'E2E Desserts';
 const EDITOR_ITEM = 'E2E Basbousa';
 
 const actions = {
+  // Verification suite (#38): a fresh address for this flow, never used before.
+  'verification/new-email': async () => {
+    state.newEmail = `e2e.code.${Date.now()}@example.com`;
+  },
+  // A RESTAURANT_OWNER account for state.newEmail that waits for its code (registered through the API; no tokens).
+  'verification/register-unverified': async () => {
+    const pending = await api('POST', '/api/auth/register', null, { email: state.newEmail, password: manifest.password, fullName: 'E2E Code', role: 'RESTAURANT_OWNER' });
+    if (pending?.verificationRequired !== true) throw new Error(`Registering ${state.newEmail} did not wait for verification`);
+  },
+  // The latest code emailed to state.newEmail, and a wrong one.
+  'verification/read-email-code': async () => {
+    state.code = readEmailCode(state.newEmail);
+    state.wrongCode = state.code === '000000' ? '111111' : '000000';
+  },
   // Fixture (#148): archive what an earlier, interrupted editor run left behind, then drop its category.
   'menu/cleanup': async () => {
     const owner = await login(manifest.accounts.restaurant.email);
@@ -385,11 +434,15 @@ async function main() {
   );
 
   if (suite === 'session') await requireShortAccessTokens();
+  if (suite === 'verification') await requireEmailVerification();
 
   const web = spawn(process.execPath, [join(E2E_DIR, 'scripts', 'serve-web.mjs'), WEB_BUILD, String(WEB_PORT)], { stdio: 'inherit' });
   await new Promise((r) => control.listen(CONTROL_PORT, '127.0.0.1', r));
   await sleep(500);
-  await cancelStrayKitchenOrders();
+  // The kitchen fixtures sign in as the seeded owner, created while email verification was off; the
+  // verification suite (#38) runs with it on and never touches the kitchen, so it skips them.
+  const kitchenFixtures = suite !== 'verification';
+  if (kitchenFixtures) await cancelStrayKitchenOrders();
 
   const results = [];
   try {
@@ -398,9 +451,9 @@ async function main() {
       results.push(await runFlow(flow));
     }
   } finally {
-    await restoreSeedDriverState().catch((error) => console.error('[cleanup] restoring the QA driver failed:', error.message));
-    await cancelStrayKitchenOrders().catch((error) => console.error('[cleanup] cancelling leftover orders failed:', error.message));
-    await restoreSeedAvailability().catch((error) => console.error('[cleanup] restoring menu/restaurant availability failed:', error.message));
+    if (kitchenFixtures) await restoreSeedDriverState().catch((error) => console.error('[cleanup] restoring the QA driver failed:', error.message));
+    if (kitchenFixtures) await cancelStrayKitchenOrders().catch((error) => console.error('[cleanup] cancelling leftover orders failed:', error.message));
+    if (kitchenFixtures) await restoreSeedAvailability().catch((error) => console.error('[cleanup] restoring menu/restaurant availability failed:', error.message));
     web.kill();
     control.close();
   }

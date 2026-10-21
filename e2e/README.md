@@ -37,12 +37,20 @@ JWT_EXPIRES_IN=60s npm run e2e:env:up   # in ../delivery-plus (or restart only a
 npm run e2e:session -- --headless
 ```
 
+**Email verification (#38).** The `verification` suite signs in an unverified owner through the email-code screen (owners don't sign up in this app). It needs auth-service to require verification (backend #252), and refuses to run otherwise. The runner reads each code from the test email sender (Redis `test:email:<address>`):
+
+```bash
+EMAIL_VERIFICATION_REQUIRED=true npm run e2e:env:up   # in ../delivery-plus (or restart only auth-service with it)
+npm run e2e:verification -- --headless
+```
+
 ## Suites
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
 | `smoke` | owner signs in → QA Kitchen (open) is shown → a new paid order is in "New orders" with its total and the *Start preparing* action · Menu tab: QA Fries → *Sold out* (checked on the public menu) → back; restaurant → *Busy* (checked on the public restaurant) → *Open* | every PR |
 | `session` | **60-second access tokens:** signed in for six minutes, reloading the board after every token expiry (five refreshes) · sign out → sign-in screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
+| `verification` | **email verification on:** an unverified owner signs in → the code screen → Resend inside the minute is refused (429, countdown restarts) → after it a new code → verify → sign in → the board (no restaurant yet) | every PR and nightly, after the session suite, with auth-service restarted at `EMAIL_VERIFICATION_REQUIRED=true` |
 | `business` | no driver free → a new paid order → *Start preparing* → "In kitchen" → *Ready for pickup* → "Ready for pickup" (no further action) → automatic dispatch created the delivery | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
