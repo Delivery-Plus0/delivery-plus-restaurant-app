@@ -1,5 +1,8 @@
 version: 2
 
+# At most two open version-update PRs per ecosystem, so a red one is noticed and fixed rather than
+# buried (Delivery-Plus0/delivery-plus#222). Security updates are not counted against this limit.
+
 updates:
   # npm dependencies.
   #
@@ -13,7 +16,7 @@ updates:
     target-branch: "dev"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 2
     ignore:
       - dependency-name: "expo"
       - dependency-name: "expo-*"
@@ -37,7 +40,7 @@ updates:
     target-branch: "dev"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "github-actions"
