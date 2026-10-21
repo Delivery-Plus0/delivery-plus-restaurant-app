@@ -32,6 +32,10 @@ describe('describeLoginError', () => {
     expect(describeLoginError(new ApiError(400, 'BadRequest', 'email must be an email'), 1)).toBe('email must be an email');
   });
 
+  it('says the account is suspended when the password was right but an admin suspended it (#202)', () => {
+    expect(describeLoginError(new ApiError(403, 'AccountSuspended', 'This account is suspended'), 1)).toBe('This account is suspended.');
+  });
+
   it('falls back to a generic message for unexpected errors', () => {
     expect(describeLoginError(new Error('boom'), 1)).toBe('Unable to sign in right now.');
   });

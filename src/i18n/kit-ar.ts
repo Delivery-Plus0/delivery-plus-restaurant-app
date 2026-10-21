@@ -19,6 +19,15 @@ export const kitArabic: Readonly<Record<string, string>> = {
   "Can't reach Delivery Plus. Check your connection and try again.": 'تعذّر الوصول إلى ديليفري بلس. تحقق من اتصالك وحاول مرة أخرى.',
   'Please sign in again.': 'يرجى تسجيل الدخول مرة أخرى.',
 
+  // Session ended (#34, #202)
+  'Your account is suspended': 'تم إيقاف حسابك',
+  "You can't use Delivery Plus with this account right now. If you think this is a mistake, contact Delivery Plus support.": 'لا يمكنك استخدام ديليفري بلس بهذا الحساب حاليًا. إذا كنت تعتقد أن هذا خطأ، فتواصل مع دعم ديليفري بلس.',
+  OK: 'حسنًا',
+  'You have been signed out': 'تم تسجيل خروجك',
+  'Your session ended. Sign in again to continue.': 'انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة.',
+  'Sign in': 'تسجيل الدخول',
+  'This account is suspended.': 'هذا الحساب موقوف.',
+
   // Dates and greetings
   'Just now': 'الآن',
   '{n}m ago': 'منذ {n} د',
