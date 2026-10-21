@@ -23,6 +23,8 @@ export function describeLoginError(error: unknown, consecutiveFailures: number):
       : base;
   }
   if (error.statusCode === 429) return t('Too many sign-in attempts. Wait a minute, then try again.');
+  // #202: the password was right, but an admin suspended the account (the suspended screen also shows).
+  if (error.error === 'AccountSuspended') return t('This account is suspended.');
   // Network failures and everything else already carry a readable message from the API client.
   return error.message;
 }

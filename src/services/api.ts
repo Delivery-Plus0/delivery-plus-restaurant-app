@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@/config/api';
-import { clearSession, getSessionSnapshot } from '@/services/session';
+import { clearSession, getSessionSnapshot, setSession } from '@/services/session';
 import { t } from '@/i18n/core';
 
 export type ErrorResponse = {
@@ -92,7 +92,77 @@ async function send(url: string, init: RequestInit): Promise<Response> {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}, authRequired = false): Promise<T> {
+/**
+ * The outcome of refreshing the session (#34):
+ * - `refreshed`: a new pair is stored; replay the request.
+ * - `ended`: the session is over (expired, revoked or reused token, or a suspended account); it has been cleared.
+ * - `unavailable`: the server couldn't be reached or is overloaded; the session is kept for the next try.
+ */
+export type RefreshOutcome = 'refreshed' | 'ended' | 'unavailable';
+
+let refreshing: Promise<RefreshOutcome> | null = null;
+
+/**
+ * Exchanges the refresh token for a new pair, **once at a time** (#34): concurrent callers share the same
+ * refresh, because a refresh token works only once and sending it twice ends the session as stolen.
+ */
+export function refreshSession(): Promise<RefreshOutcome> {
+  refreshing ??= runRefresh().finally(() => {
+    refreshing = null;
+  });
+  return refreshing;
+}
+
+async function runRefresh(): Promise<RefreshOutcome> {
+  const refreshToken = getSessionSnapshot().session?.refreshToken;
+  if (!refreshToken) {
+    await clearSession('expired');
+    return 'ended';
+  }
+
+  let response: Response;
+  try {
+    response = await send(buildUrl('/api/auth/refresh'), {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    return 'unavailable';
+  }
+  const payload = await parseJson<{ accessToken?: string; refreshToken?: string; error?: string }>(response);
+
+  if (response.ok && payload?.accessToken && payload.refreshToken) {
+    // Signed out while the refresh was in flight: don't bring the session back.
+    if (getSessionSnapshot().session?.refreshToken !== refreshToken) return 'ended';
+    await setSession(payload.accessToken, payload.refreshToken);
+    return 'refreshed';
+  }
+  if (response.status === 429 || response.status >= 500) return 'unavailable';
+  await clearSession(payload?.error === 'AccountSuspended' ? 'suspended' : 'expired');
+  return 'ended';
+}
+
+/**
+ * Signs out on this device (#34): ends the server session, then forgets the tokens even when offline.
+ * Pass `refreshToken` to end a session that was never stored (a sign-in this app turned down).
+ */
+export async function signOut(refreshToken = getSessionSnapshot().session?.refreshToken): Promise<void> {
+  if (refreshToken) {
+    try {
+      await send(buildUrl('/api/auth/logout'), {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+    } catch {
+      // Offline: the server session still expires on its own; this device forgets it now.
+    }
+  }
+  await clearSession();
+}
+
+async function request<T>(path: string, options: RequestInit = {}, authRequired = false, replayed = false): Promise<T> {
   const headers = new Headers(options.headers ?? {});
   headers.set('Accept', 'application/json');
 
@@ -116,9 +186,21 @@ async function request<T>(path: string, options: RequestInit = {}, authRequired 
       payload ?? { statusCode: response.status, error: response.statusText, message: response.statusText },
     );
 
-    // A 401 on a public route (e.g. wrong password at login) says nothing about the stored session.
+    // #34: an expired access token is refreshed once and the request replayed with the new one. A 401 on
+    // a public route (e.g. wrong password at login) says nothing about the stored session.
     if (response.status === 401 && authRequired) {
-      await clearSession();
+      if (!replayed) {
+        const outcome = await refreshSession();
+        if (outcome === 'refreshed') return request<T>(path, options, authRequired, true);
+        if (outcome === 'unavailable') throw new ApiError(response.status, normalized.error, normalized.message, normalized);
+      } else {
+        await clearSession('expired');
+      }
+    }
+
+    // #202: a suspended account, on any route (sign-in included), shows the suspended screen.
+    if (response.status === 403 && normalized.error === 'AccountSuspended') {
+      await clearSession('suspended');
     }
 
     throw new ApiError(response.status, normalized.error, normalized.message, normalized);

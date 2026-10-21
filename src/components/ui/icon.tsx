@@ -1,7 +1,8 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import type { ColorValue } from 'react-native';
+import { I18nManager, Platform, type ColorValue } from 'react-native';
 
 import { BrandColors, IconSize } from '@/constants/theme';
+import { isRTL, useLocale } from '@/i18n';
 
 const icons = {
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
@@ -37,6 +38,19 @@ const icons = {
 
 export type IconName = keyof typeof icons;
 
+/** Icons that point along the reading direction, so they flip in Arabic (right to left). */
+const DIRECTIONAL: ReadonlySet<IconName> = new Set<IconName>(['back', 'chevronRight']);
+
+/**
+ * Whether directional icons are drawn mirrored. It follows the layout direction actually in effect: on the
+ * web it changes with the language at once; on Android only after the restart that flips the layout
+ * (see device.ts). iOS SF Symbols mirror their directional glyphs themselves in right-to-left layouts.
+ */
+export function mirrorsDirectionalIcons(locale: Parameters<typeof isRTL>[0], platform = Platform.OS, nativeRTL = I18nManager.isRTL): boolean {
+  if (platform === 'ios') return false;
+  return platform === 'web' ? isRTL(locale) : nativeRTL;
+}
+
 type IconProps = {
   name: IconName;
   size?: number;
@@ -44,5 +58,9 @@ type IconProps = {
 };
 
 export function Icon({ name, size = IconSize.md, color = BrandColors.text }: IconProps) {
-  return <SymbolView name={icons[name]} size={size} tintColor={color} />;
+  const locale = useLocale();
+  const mirrored = DIRECTIONAL.has(name) && mirrorsDirectionalIcons(locale);
+  return <SymbolView name={icons[name]} size={size} tintColor={color} style={mirrored ? MIRRORED : undefined} />;
 }
+
+const MIRRORED = { transform: [{ scaleX: -1 }] };
