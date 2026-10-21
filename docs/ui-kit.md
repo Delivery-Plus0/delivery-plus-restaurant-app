@@ -30,3 +30,13 @@ Don't use the native `Alert` or `window.confirm` for decisions. They look differ
 - Dialogs and sheets are modal (`accessibilityViewIsModal`) and close with the system back button. Toasts are announced (live region, plus `announceForAccessibility` on native).
 - Give every interactive element a `testID`. The kit mirrors it to `nativeID`, so web flows find it as well.
 - Lay out with `start`/`end` (and `paddingHorizontal`/`gap`), never `left`/`right`, so the kit works right-to-left for Arabic (#151).
+- Directional icons (`back`, `chevronRight`) mirror themselves in Arabic: `Icon` flips them when the layout is right to left. Don't flip them yourself. A new icon that points along the reading direction belongs in `DIRECTIONAL` in `ui/icon.tsx`.
+- Tab bars use `TabBar.style` and `TabBar.labelStyle` from `constants/theme.ts`, which leave room for the whole label on the web.
+
+## Counted nouns
+
+Use `tn(count, '{count} order', '{count} orders')`, never `count === 1 ? 'order' : 'orders'` or two `t()` texts chosen by the count. Arabic has six plural forms, including a dual ("طلبان").
+
+- Add the six Arabic forms to `appArabicPlurals` in `src/i18n/ar.ts`, keyed by the English plural: `zero` (0), `one` (1), `two` (2), `few` (3–10), `many` (11–99), `other` (100+).
+- The coverage test fails when a `tn()` text is missing a form, or when the code builds a counted noun from pieces.
+- To show a formatted number, pass it as `count`: `tn(n, '{count} order', '{count} orders', { count: formatted })`.

@@ -24,6 +24,7 @@ import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, 
 import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
 import { LOCALE_NAMES, setLocale, t, useLocale } from '@/i18n';
+import { todayOrdersLabel } from '@/utils/today-summary';
 
 /** Three lanes side by side from here; two below it; one on phones. */
 const WIDE = 1024;
@@ -243,7 +244,7 @@ function RestaurantCard({ restaurant, counts, today }: { restaurant: Restaurant;
           {t('Today')}
         </ThemedText>
         <ThemedText type="smallBold" testID="today-orders">
-          {today ? `${today.orders} ${today.orders === 1 ? 'order' : 'orders'}` : '…'}
+          {today ? todayOrdersLabel(today.orders) : '…'}
         </ThemedText>
         <ThemedText type="smallBold" style={styles.countValue} testID="today-revenue">
           {today ? formatMoney(today.revenue) : ''}
