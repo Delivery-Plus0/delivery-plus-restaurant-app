@@ -1,0 +1,25 @@
+url: ${APP_URL}
+name: Owner signs out, and a reload stays signed out
+tags:
+  - session
+---
+- runFlow: ../_shared/login.yaml
+- tapOn:
+    id: sign-out
+- tapOn:
+    id: sign-out-dialog-confirm
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+# Signing out isn't an ended session: no "You have been signed out" screen.
+- assertNotVisible:
+    id: session-ended
+# Both tokens are gone from this browser: the board sends the owner back to sign-in.
+- openLink: ${APP_URL}/home
+- extendedWaitUntil:
+    visible:
+      id: login-email
+    timeout: 20000
+- assertNotVisible:
+    id: restaurant-heading

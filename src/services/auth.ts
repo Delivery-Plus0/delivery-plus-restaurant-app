@@ -15,11 +15,20 @@ export type LoginRequest = {
   password: string;
 };
 
+/** Login, and register while email verification is off: a signed-in session (#34). */
 export type AuthResponse = {
   accessToken: string;
+  /** Single use: exchanged for a new pair by `refreshSession` (api.ts). */
+  refreshToken: string;
   userId: string;
   email: string;
   role: UserRole;
+};
+
+/** Register while email verification is required (#203): no tokens until the email is verified. */
+export type VerificationPendingResponse = {
+  userId: string;
+  verificationRequired: true;
 };
 
 export type JwtUser = {
@@ -30,8 +39,8 @@ export type JwtUser = {
 
 export type AuthApiError = ErrorResponse;
 
-export async function registerAccount(payload: RegisterRequest): Promise<AuthResponse> {
-  return apiPost<AuthResponse>('/api/auth/register', payload, false);
+export async function registerAccount(payload: RegisterRequest): Promise<AuthResponse | VerificationPendingResponse> {
+  return apiPost<AuthResponse | VerificationPendingResponse>('/api/auth/register', payload, false);
 }
 
 export async function loginAccount(payload: LoginRequest): Promise<AuthResponse> {

@@ -2,7 +2,8 @@ import { Redirect, Stack } from 'expo-router';
 import { useEffect } from 'react';
 
 import { BrandColors } from '@/constants/theme';
-import { clearSession, useAuthSession } from '@/services/session';
+import { signOut } from '@/services/api';
+import { useAuthSession } from '@/services/session';
 import { OWNER_ROLE } from '@/utils/order-status';
 
 export default function AppLayout() {
@@ -11,7 +12,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     // Sign-in already refuses other roles; this covers a session stored by an older build or another app.
-    if (notAnOwner) void clearSession();
+    if (notAnOwner) void signOut();
   }, [notAnOwner]);
 
   if (!hydrated) {

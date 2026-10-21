@@ -10,6 +10,7 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { API_BASE_URL } from '@/config/api';
 import { Spacing } from '@/constants/theme';
 import { loginAccount } from '@/services/auth';
+import { signOut } from '@/services/api';
 import { setSession } from '@/services/session';
 import { describeLoginError } from '@/utils/login-errors';
 import { OWNER_ROLE } from '@/utils/order-status';
@@ -43,10 +44,11 @@ export default function LoginScreen() {
       const auth = await loginAccount({ email: email.trim(), password });
       if (auth.role !== OWNER_ROLE) {
         // The credentials are valid but this app is for restaurant owners only; don't keep the session.
+        void signOut(auth.refreshToken);
         setError(t('This app is for restaurant owners. Sign in with an owner account, or use the Delivery Plus customer or driver app.'));
         return;
       }
-      await setSession(auth.accessToken);
+      await setSession(auth.accessToken, auth.refreshToken);
       router.replace('/home');
     } catch (caught) {
       const consecutiveFailures = failures + 1;

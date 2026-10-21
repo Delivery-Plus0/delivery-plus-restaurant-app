@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 
+import { SessionEndedScreen } from '@/components/session-ended';
 import { BrandColors } from '@/constants/theme';
 import { loadSavedLocale, useLocale } from '@/i18n';
 import { hydrateSession, useAuthSession } from '@/services/session';
@@ -47,6 +48,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       {/* Keyed by language so every screen re-renders in the new one (#151). */}
       <Slot key={locale} />
+      {session.ended ? <SessionEndedScreen reason={session.ended} /> : null}
     </ThemeProvider>
   );
 }

@@ -155,7 +155,6 @@ export const appArabic: Readonly<Record<string, string>> = {
   'you@example.com': 'you@example.com',
   Password: 'كلمة المرور',
   'Your password': 'كلمة المرور',
-  'Sign in': 'تسجيل الدخول',
 };
 
 /** #27: counted nouns for tn(), keyed by the English plural; Arabic needs all six forms. */

@@ -75,7 +75,25 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Run restaurant UI suite
+        id: suite
         run: node e2e/scripts/run.mjs --suite "$SUITE" --build --headless
+        env:
+          E2E_API_URL: ${{ env.E2E_API_URL }}
+          E2E_MANIFEST: ${{ env.E2E_MANIFEST }}
+
+      # #34: the session suite needs short access tokens. Only auth-service changes; the data stays.
+      - name: Restart auth-service with 60-second access tokens
+        # Also after a failed main suite (its web build is reused), but not when the stack never started.
+        if: ${{ !cancelled() && (steps.suite.outcome == 'success' || steps.suite.outcome == 'failure') }}
+        working-directory: backend
+        env:
+          JWT_EXPIRES_IN: 60s
+        run: docker compose -p delivery-plus-e2e -f docker-compose.base.yml -f docker-compose.test.yml -f docker-compose.e2e.yml up -d --no-deps --wait --wait-timeout 180 auth-service
+
+      - name: Run Maestro session suite (60-second access tokens)
+        # Also after a failed main suite (its web build is reused), but not when the stack never started.
+        if: ${{ !cancelled() && (steps.suite.outcome == 'success' || steps.suite.outcome == 'failure') }}
+        run: node e2e/scripts/run.mjs --suite session --headless
         env:
           E2E_API_URL: ${{ env.E2E_API_URL }}
           E2E_MANIFEST: ${{ env.E2E_MANIFEST }}
