@@ -39,13 +39,15 @@ const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '1280x1800';
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
-  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml', 'smoke/03-arabic.yaml'],
+  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml', 'smoke/03-arabic.yaml', 'smoke/04-change-password.yaml', 'smoke/05-forgot-password.yaml'],
   business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml', 'business/03-reject-order.yaml'],
   // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
   session: ['session/stay-signed-in.yaml', 'session/sign-out.yaml'],
   // #38: needs EMAIL_VERIFICATION_REQUIRED=true on auth-service (backend #252), so it is not part of `all`.
   verification: ['verification/unverified-sign-in.yaml'],
 };
+// #26: the two password flows on their own (they are in smoke too); they need no seed data.
+SUITES.password = ['smoke/04-change-password.yaml', 'smoke/05-forgot-password.yaml'];
 SUITES.all = [...SUITES.smoke, ...SUITES.business];
 
 /** The session suite proves refreshes only with short tokens; refuse a stack that issues long ones. */
@@ -239,7 +241,43 @@ function resetRateLimits() {
 const EDITOR_CATEGORY = 'E2E Desserts';
 const EDITOR_ITEM = 'E2E Basbousa';
 
+/** Runs a command in one of the stack's containers and returns its output. */
+function dockerExec(service, ...cmd) {
+  return execFileSync('docker', ['exec', container(service), ...cmd], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
 const actions = {
+  // Password flows (#26, backend #35): a fresh RESTAURANT_OWNER whose phone is verified (straight in
+  // user-service's table, test stack only), so the flows never change the QA owner's password.
+  'password/new-account': async () => {
+    resetRateLimits();
+    const stamp = Date.now();
+    state.newEmail = `e2e.password.${stamp}@example.com`;
+    state.newPhone = `012${String(stamp).slice(-8)}`; // as a person types it
+    state.newPassword = 'E2e-New-Passw0rd!';
+    const auth = await api('POST', '/api/auth/register', null, { email: state.newEmail, password: manifest.password, fullName: 'E2E Password', phone: state.newPhone, role: 'RESTAURANT_OWNER' });
+    if (!auth?.accessToken) throw new Error('Registering did not sign in: the password flows need EMAIL_VERIFICATION_REQUIRED off');
+    const me = await api('GET', '/api/users/me', auth.accessToken);
+    if (!/^[0-9a-f-]{36}$/i.test(me.id) || me.phone !== `+20${state.newPhone.slice(1)}`) throw new Error(`Unexpected profile ${me.id} ${me.phone}`);
+    dockerExec('postgres', 'psql', '-U', 'postgres', '-d', 'user_service', '-c', `update user_profiles set "phoneVerifiedAt" = now() where id = '${me.id}'`);
+    await api('POST', '/api/auth/logout', null, { refreshToken: auth.refreshToken }).catch(() => undefined);
+  },
+  // The reset code the test SMS sender (SMS_PROVIDER=test) kept for that phone, and a wrong one. It is
+  // texted after the answer (user-service sends in the background), so wait for it briefly.
+  'password/read-reset-code': async () => {
+    const phone = `+20${state.newPhone.slice(1)}`;
+    const deadline = Date.now() + 10_000;
+    for (;;) {
+      const code = /(\d{6})/.exec(dockerExec('redis', 'redis-cli', 'GET', `test:sms:${phone}`).trim())?.[1];
+      if (code) {
+        state.code = code;
+        state.wrongCode = code === '000000' ? '111111' : '000000';
+        return;
+      }
+      if (Date.now() > deadline) throw new Error(`No reset code was texted to ${phone}`);
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  },
   // Verification suite (#38): a fresh address for this flow, never used before.
   'verification/new-email': async () => {
     state.newEmail = `e2e.code.${Date.now()}@example.com`;

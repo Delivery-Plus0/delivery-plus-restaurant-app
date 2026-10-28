@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { ChangePasswordSheet } from '@/components/change-password-sheet';
 import { OrderDetailSheet } from '@/components/order-detail-sheet';
 import { RestaurantOrderCard } from '@/components/restaurant-order-card';
 import { RestaurantPicker } from '@/components/restaurant-picker';
@@ -43,6 +44,7 @@ export default function HomeScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const hideNotice = useCallback(() => setNotice(null), []);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const otherLocale = useLocale() === 'ar' ? 'en' : 'ar';
 
   async function signOut() {
@@ -74,6 +76,14 @@ export default function HomeScreen() {
               size="sm"
               fullWidth={false}
               onPress={() => void setLocale(otherLocale)}
+            />
+            <AppButton
+              testID="change-password"
+              title={t('Change password')}
+              variant="ghost"
+              size="sm"
+              fullWidth={false}
+              onPress={() => setChangingPassword(true)}
             />
             <AppButton testID="sign-out" title={t('Sign out')} icon="logout" variant="ghost" size="sm" fullWidth={false} onPress={() => setConfirmingSignOut(true)} />
           </View>
@@ -191,6 +201,15 @@ export default function HomeScreen() {
           onRejected={(message) => {
             setOpenOrderId(null);
             setNotice(message);
+          }}
+        />
+      ) : null}
+      {changingPassword ? (
+        <ChangePasswordSheet
+          onClose={() => setChangingPassword(false)}
+          onChanged={() => {
+            setChangingPassword(false);
+            setNotice(t('Password changed. Your other devices were signed out.'));
           }}
         />
       ) : null}
