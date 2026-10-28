@@ -72,6 +72,47 @@ export const kitArabic: Readonly<Record<string, string>> = {
   'Unable to send a new code right now. Try again.': 'تعذّر إرسال كود جديد الآن. حاول مرة أخرى.',
   'Email verified. Sign in to continue.': 'تم تأكيد بريدك الإلكتروني. سجّل الدخول للمتابعة.',
 
+  // Password change and reset (backend #35)
+  'Change password': 'تغيير كلمة المرور',
+  'You stay signed in here. Every other device is signed out.': 'ستبقى مسجّل الدخول هنا، وسيتم تسجيل الخروج من كل الأجهزة الأخرى.',
+  'Current password': 'كلمة المرور الحالية',
+  'Enter your current password': 'أدخل كلمة المرور الحالية',
+  'New password': 'كلمة المرور الجديدة',
+  'Confirm new password': 'تأكيد كلمة المرور الجديدة',
+  'At least 8 characters': '8 أحرف على الأقل',
+  'Enter a new password': 'أدخل كلمة مرور جديدة',
+  'Use at least {count} characters': 'استخدم {count} أحرف على الأقل',
+  'Enter the new password again': 'أدخل كلمة المرور الجديدة مرة أخرى',
+  "The passwords don't match": 'كلمتا المرور غير متطابقتين',
+  'Choose a password different from your current one.': 'اختر كلمة مرور مختلفة عن كلمة المرور الحالية.',
+  'Your current password is wrong. Too many wrong tries lock the account for a while.':
+    'كلمة المرور الحالية غير صحيحة. كثرة المحاولات الخاطئة تقفل الحساب لبعض الوقت.',
+  'Unable to change your password right now. Try again.': 'تعذّر تغيير كلمة المرور الآن. حاول مرة أخرى.',
+  'Password changed. Your other devices were signed out.': 'تم تغيير كلمة المرور، وتم تسجيل الخروج من أجهزتك الأخرى.',
+  'Forgot password?': 'نسيت كلمة المرور؟',
+  'Forgot your password?': 'نسيت كلمة المرور؟',
+  "Enter your account's phone number. We'll text you a code to set a new password.":
+    'أدخل رقم الموبايل المسجّل في حسابك، وسنرسل إليك كودًا في رسالة نصية لتعيين كلمة مرور جديدة.',
+  Phone: 'الموبايل',
+  'Only a phone number you verified in the app can get the code.': 'لا يصل الكود إلا إلى رقم موبايل أكّدته في التطبيق.',
+  'Send code': 'إرسال الكود',
+  'Unable to send a code right now. Try again.': 'تعذّر إرسال الكود الآن. حاول مرة أخرى.',
+  "Resetting a password by text message isn't available yet. Try again later.":
+    'إعادة تعيين كلمة المرور برسالة نصية غير متاحة بعد. حاول مرة أخرى لاحقًا.',
+  'Too many requests. Wait a while, then try again.': 'طلبات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.',
+  'Set a new password': 'تعيين كلمة مرور جديدة',
+  'Enter the code and choose a new password.': 'أدخل الكود واختر كلمة مرور جديدة.',
+  'If {phone} is the verified phone of an account, we texted it a 6-digit code. It works for 5 minutes.':
+    'إذا كان {phone} هو الموبايل المؤكَّد لأحد الحسابات، فقد أرسلنا إليه كودًا من 6 أرقام. الكود صالح لمدة 5 دقائق.',
+  'Enter the 6 digits from the text message.': 'أدخل الأرقام الستة من الرسالة.',
+  "That code isn't right. Check the text message and the phone number, then try again.":
+    'الكود غير صحيح. تحقق من الرسالة النصية ورقم الموبايل، ثم حاول مرة أخرى.',
+  'Unable to reset your password right now. Try again.': 'تعذّرت إعادة تعيين كلمة المرور الآن. حاول مرة أخرى.',
+  'We sent a new code to {phone}.': 'أرسلنا كودًا جديدًا إلى {phone}.',
+  'Reset password': 'إعادة تعيين كلمة المرور',
+  'Use a different number': 'استخدام رقم آخر',
+  'Password changed. Sign in with your new password.': 'تم تغيير كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.',
+
   // Image uploads
   'Choose a JPEG, PNG or WebP image.': 'اختر صورة بصيغة JPEG أو PNG أو WebP.',
   'Choose an image under {mb} MB.': 'اختر صورة أصغر من {mb} ميجابايت.',

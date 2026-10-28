@@ -77,3 +77,20 @@ While the backend requires a verified email (`EMAIL_VERIFICATION_REQUIRED`, back
   - `verify-email-screen`, `verify-email-code`, `verify-email-submit`, `verify-email-resend`;
   - `verify-email-error`, `verify-email-notice`;
   - `verify-email-back`, `verify-email-restart`.
+
+## Passwords
+
+Changing a password and resetting a forgotten one use backend #35. The rules in `utils/password.ts` mirror the backend's: at least 8 characters, and a texted code that works for 5 minutes, allows 5 wrong tries, and can be sent again after 60 seconds.
+
+- **Change** (`components/change-password-sheet.tsx`): a sheet with the current password, the new one, and the new one again. Each app opens it from its profile (the restaurant app from its header), and on `onChanged` says "Password changed. Your other devices were signed out."
+  - This device stays signed in, and every other session ends.
+  - A wrong current password is `400 CurrentPasswordIncorrect`, never a `401`. The API client takes a `401` on a signed-in call as an expired session: it would refresh, retry (counting a second wrong try towards the lockout), then sign the person out.
+- **Forgot** (`app/(auth)/forgot-password.tsx`): each app's sign-in links to `/forgot-password` ("Forgot password?").
+  - Step 1 asks for the phone number. Step 2 asks for the code, the new password, and the new password again.
+  - The server answers the same whether or not the number has an account, and so does the screen ("If … is the verified phone of an account, we texted it a code"). Only a verified phone gets the code.
+  - When SMS isn't set up on the server (`503 SmsUnavailable`), step 1 says so and stops there.
+  - A refused code is one `401` for every case. `describeResetRefusal` tells wrong, expired and used up apart from the rules above, as `describeCodeRefusal` does for email codes. After an expired or used-up code, Reset waits for a new code.
+- **Afterwards:** a reset ends every session. The screen calls `finishPasswordReset()` and goes to `/login`, which reads `takePasswordResetNotice()` and says "Password changed. Sign in with your new password."
+- **Test ids:**
+  - `change-password-sheet`, `change-password-current`, `change-password-new`, `change-password-confirm`, `change-password-submit`, `change-password-error`;
+  - `forgot-screen`, `forgot-phone`, `forgot-send`, `forgot-reset-screen`, `forgot-sent`, `forgot-code`, `forgot-new-password`, `forgot-confirm-password`, `forgot-submit`, `forgot-resend`, `forgot-change-phone`, `forgot-error`, `forgot-notice`, `forgot-back`.
