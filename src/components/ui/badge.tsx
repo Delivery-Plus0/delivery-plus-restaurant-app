@@ -5,7 +5,7 @@ import { BrandColors, FontFamily, Radius, Spacing } from '@/constants/theme';
 export type BadgeTone = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info';
 
 const toneColors: Record<BadgeTone, { background: string; text: string }> = {
-  neutral: { background: BrandColors.surfaceMuted, text: BrandColors.textSecondary },
+  neutral: { background: BrandColors.divider, text: BrandColors.textSecondary },
   brand: { background: BrandColors.primarySoft, text: BrandColors.primaryText },
   success: { background: BrandColors.successSoft, text: BrandColors.success },
   warning: { background: BrandColors.warningSoft, text: BrandColors.warning },
@@ -29,14 +29,22 @@ export function Badge({ label, tone = 'neutral', testID }: { label: string; tone
 const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + Spacing.half,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.two + Spacing.half,
-    paddingVertical: Spacing.half,
+    paddingVertical: 3,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   label: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
-    fontFamily: FontFamily.bold,
+    fontWeight: '500',
+    fontFamily: FontFamily.medium,
   },
 });

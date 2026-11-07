@@ -137,6 +137,7 @@ export default function ForgotPasswordScreen() {
           <FormTextInput
             testID="forgot-phone"
             label={t('Phone')}
+            icon="phone"
             value={phoneInput}
             onChangeText={(value) => {
               setPhoneInput(value);
@@ -187,6 +188,7 @@ export default function ForgotPasswordScreen() {
           testID="forgot-new-password"
           ref={passwordRef}
           label={t('New password')}
+          icon="lock"
           value={password}
           onChangeText={(value) => {
             setPassword(value);
@@ -205,6 +207,7 @@ export default function ForgotPasswordScreen() {
           testID="forgot-confirm-password"
           ref={confirmRef}
           label={t('Confirm new password')}
+          icon="lock"
           value={confirmation}
           onChangeText={(value) => {
             setConfirmation(value);

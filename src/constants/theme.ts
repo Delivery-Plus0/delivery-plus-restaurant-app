@@ -18,10 +18,13 @@ export const BrandColors = {
   /** Red for text/icons on light surfaces (6.9:1 on white). */
   primaryText: '#B3140F',
   primarySoft: '#FDEDEC',
+  primarySoftStrong: '#FBD5D3',
   onPrimary: '#FFFFFF',
   tanSoft: '#FCF3E3',
   /** Text on the gold accent. */
   onTan: '#4A300A',
+  /** Gold-family text on light surfaces. */
+  tanText: '#8A5A0E',
 
   // Surfaces (warm neutrals)
   surface: '#FFFFFF',
@@ -36,8 +39,16 @@ export const BrandColors = {
 
   // Lines
   border: '#E6DDD5',
+  /** Secondary-button outline and the sheet grabber. */
+  borderStrong: '#D3C8BE',
   divider: '#EFE8E1',
   disabled: '#D3C8BE',
+  /** A disabled control's fill and text: a style of its own, never just opacity. */
+  disabledSurface: '#EFE8E1',
+  textDisabled: '#ABA096',
+  /** Selected chips, segmented controls and the focus ring use ink. */
+  inverse: '#1F1A17',
+  onInverse: '#FFFFFF',
 
   // Semantic — error is a deep crimson so it reads differently from the brand red
   danger: '#9B1222',
@@ -144,7 +155,8 @@ export const Layout = {
   /** Minimum touch target (Apple HIG / Material). */
   minTouch: 44,
   buttonHeight: 52,
-  buttonHeightSm: 40,
+  buttonHeightSm: 44,
+  buttonHeightXs: 36,
   inputHeight: 52,
 } as const;
 

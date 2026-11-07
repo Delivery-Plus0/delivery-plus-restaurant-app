@@ -8,7 +8,11 @@ import {
   CircleUserRound,
   CircleX,
   Clock,
+  Eye,
+  EyeOff,
   House,
+  Languages,
+  Lock,
   LogOut,
   type LucideIcon,
   Mail,
@@ -25,6 +29,7 @@ import {
   Store,
   Trash2,
   Truck,
+  UserRound,
   UtensilsCrossed,
   Wallet,
   WifiOff,
@@ -69,6 +74,11 @@ const icons = {
   offline: WifiOff,
   wallet: Wallet,
   directions: Navigation,
+  eye: Eye,
+  eyeOff: EyeOff,
+  lock: Lock,
+  user: UserRound,
+  language: Languages,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof icons;

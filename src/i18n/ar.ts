@@ -2,6 +2,12 @@ import type { ArabicPluralForms } from './core';
 
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
+  // Desktop sign-in brand panel (Redesign 2026, R-01)
+  'Your kitchen order desk': 'لوحة طلبات مطبخك',
+  'New paid orders arrive automatically': 'الطلبات المدفوعة الجديدة توصل تلقائيًا',
+  'Move each order from kitchen to pickup': 'انقل كل طلب من المطبخ للاستلام',
+  'Keep your menu and availability up to date': 'خلّي المنيو والتوفّر محدّثين',
+  'Delivery Plus · Restaurant': 'ديليفري بلس · المطاعم',
   // Tabs
   Orders: 'الطلبات',
   Menu: 'القائمة',

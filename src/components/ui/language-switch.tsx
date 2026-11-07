@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { AppButton } from '@/components/ui/app-button';
-import { Spacing } from '@/constants/theme';
+import { BrandColors, Elevation, Radius, Spacing } from '@/constants/theme';
 import { LOCALE_NAMES, LOCALES, setLocale, t, useLocale } from '@/i18n';
 
-/** Arabic / English switch (#151). Ids: `language-ar`, `language-en`. */
+/**
+ * Arabic / English switch (#151), drawn as the Figma segmented control (Redesign 2026).
+ * Ids: `language-ar`, `language-en`.
+ */
 export function LanguageSwitch() {
   const locale = useLocale();
   const [needsRestart, setNeedsRestart] = useState(false);
@@ -16,18 +18,26 @@ export function LanguageSwitch() {
       <ThemedText type="caption" themeColor="textSecondary">
         {t('Language')}
       </ThemedText>
-      <View style={styles.row}>
-        {LOCALES.map((option) => (
-          <View key={option} style={styles.option}>
-            <AppButton
+      <View style={styles.track} accessibilityRole="radiogroup">
+        {LOCALES.map((option) => {
+          const selected = option === locale;
+          return (
+            <Pressable
+              key={option}
               testID={`language-${option}`}
-              title={LOCALE_NAMES[option]}
-              size="sm"
-              variant={option === locale ? 'primary' : 'secondary'}
+              nativeID={`language-${option}`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, checked: selected }}
+              accessibilityLabel={LOCALE_NAMES[option]}
               onPress={() => void setLocale(option).then(setNeedsRestart)}
-            />
-          </View>
-        ))}
+              style={[styles.segment, selected && styles.segmentSelected]}
+            >
+              <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
+                {LOCALE_NAMES[option]}
+              </ThemedText>
+            </Pressable>
+          );
+        })}
       </View>
       {needsRestart ? (
         <ThemedText type="caption" themeColor="textSecondary">
@@ -42,11 +52,22 @@ const styles = StyleSheet.create({
   root: {
     gap: Spacing.two,
   },
-  row: {
+  track: {
     flexDirection: 'row',
-    gap: Spacing.two,
+    padding: Spacing.one,
+    gap: Spacing.one,
+    borderRadius: Radius.sm,
+    backgroundColor: BrandColors.divider,
   },
-  option: {
+  segment: {
     flex: 1,
+    height: 36,
+    borderRadius: Radius.sm - Spacing.one,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentSelected: {
+    backgroundColor: BrandColors.surface,
+    ...Elevation.low,
   },
 });
