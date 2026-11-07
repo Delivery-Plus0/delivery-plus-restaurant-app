@@ -316,11 +316,14 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
               {item.description}
             </ThemedText>
           ) : null}
-          <ThemedText type="small" themeColor="textSecondary" style={styles.tabular}>
-            {formatMoney(item.price)}
-          </ThemedText>
+          {/* The label sits on the price line so the name keeps the full width on a phone. */}
+          <View style={styles.priceLine}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.tabular}>
+              {formatMoney(item.price)}
+            </ThemedText>
+            <Badge label={item.available ? t('Available') : t('Sold out')} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
+          </View>
         </View>
-        <Badge label={item.available ? t('Available') : t('Sold out')} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
         <AvailabilitySwitch
           testID={`item-${item.id}-toggle`}
           value={item.available}
@@ -336,6 +339,13 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
 }
 
 const styles = StyleSheet.create({
+  priceLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.half,
+  },
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
