@@ -5,9 +5,10 @@ import { BrandColors, FontFamily, IconSize, Layout, Radius, Spacing } from '@/co
 
 /**
  * Figma "Button" (Redesign 2026): Primary (one per screen), Secondary (outline), Tonal (brand-subtle, e.g. Add),
- * Ghost (text only), Danger (destructive entry points: crimson on crimson-subtle).
+ * Ghost (text only), Danger (destructive entry points: crimson on crimson-subtle), Destructive (the filled
+ * crimson confirm button inside a destructive dialog).
  */
-type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'danger' | 'destructive';
 
 type AppButtonProps = {
   title: string;
@@ -29,6 +30,7 @@ const labelColor: Record<Variant, string> = {
   tonal: BrandColors.primaryText,
   ghost: BrandColors.primaryText,
   danger: BrandColors.danger,
+  destructive: BrandColors.onPrimary,
 };
 
 export function AppButton({
@@ -119,6 +121,9 @@ const styles = StyleSheet.create({
   danger: {
     backgroundColor: BrandColors.dangerSoft,
   },
+  destructive: {
+    backgroundColor: BrandColors.dangerStrong,
+  },
   disabled: {
     backgroundColor: BrandColors.disabledSurface,
     borderColor: BrandColors.disabledSurface,
@@ -141,4 +146,5 @@ const pressedStyles = StyleSheet.create({
   tonal: { backgroundColor: BrandColors.primarySoftStrong },
   ghost: { backgroundColor: BrandColors.primarySoft },
   danger: { opacity: 0.8 },
+  destructive: { backgroundColor: BrandColors.danger },
 });

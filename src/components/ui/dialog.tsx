@@ -2,7 +2,8 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
-import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { t } from '@/i18n';
 
 type DialogProps = {
@@ -12,6 +13,8 @@ type DialogProps = {
   confirmLabel: string;
   cancelLabel?: string;
   destructive?: boolean;
+  /** Icon above the title (Figma "Dialog"). Destructive dialogs default to the alert icon. */
+  icon?: IconName;
   onConfirm: () => void;
   onCancel: () => void;
   /** Ids: `<testID>`, `<testID>-confirm`, `<testID>-cancel`. */
@@ -30,23 +33,30 @@ export function Dialog({
   confirmLabel,
   cancelLabel = t('Cancel'),
   destructive = false,
+  icon,
   onConfirm,
   onCancel,
   testID = 'dialog',
 }: DialogProps) {
+  const glyph = icon ?? (destructive ? 'error' : undefined);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.root}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityLabel={cancelLabel} accessibilityRole="button" />
         <View style={styles.card} accessibilityViewIsModal accessibilityRole="alert" testID={testID} nativeID={testID}>
-          <ThemedText type="subtitle" accessibilityRole="header">
+          {glyph ? (
+            <View style={[styles.icon, destructive ? styles.iconDanger : styles.iconBrand]}>
+              <Icon name={glyph} size={IconSize.lg} color={destructive ? BrandColors.danger : BrandColors.primary} />
+            </View>
+          ) : null}
+          <ThemedText type="heading" accessibilityRole="header">
             {title}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {message}
           </ThemedText>
           <View style={styles.actions}>
-            <AppButton testID={`${testID}-confirm`} title={confirmLabel} variant={destructive ? 'danger' : 'primary'} onPress={onConfirm} />
+            <AppButton testID={`${testID}-confirm`} title={confirmLabel} variant={destructive ? 'destructive' : 'primary'} onPress={onConfirm} />
             <AppButton testID={`${testID}-cancel`} title={cancelLabel} variant="ghost" onPress={onCancel} />
           </View>
         </View>
@@ -65,14 +75,28 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 400,
     gap: Spacing.two,
     padding: Spacing.four,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     backgroundColor: BrandColors.surface,
   },
+  icon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.one,
+  },
+  iconDanger: {
+    backgroundColor: BrandColors.dangerSoft,
+  },
+  iconBrand: {
+    backgroundColor: BrandColors.primarySoft,
+  },
   actions: {
-    gap: Spacing.two,
-    marginTop: Spacing.three,
+    gap: Spacing.one,
+    marginTop: Spacing.two,
   },
 });

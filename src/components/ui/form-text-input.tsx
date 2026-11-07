@@ -11,6 +11,8 @@ type FormTextInputProps = TextInputProps & {
   hint?: string;
   /** Leading icon inside the field (Figma "Input": mail for email, lock for password, user for name). */
   icon?: IconName;
+  /** Fixed text before the value, e.g. the country code `+20` on phone fields (Figma "Input / Phone"). */
+  prefix?: string;
   ref?: Ref<TextInput>;
 };
 
@@ -18,7 +20,7 @@ type FormTextInputProps = TextInputProps & {
  * Figma "Input" (Redesign 2026): label, a 52 px field with an optional leading icon, and a helper or error line.
  * A `secureTextEntry` field gets a show/hide button (`<testID>-visibility`).
  */
-export function FormTextInput({ label, error, hint, icon, style, onFocus, onBlur, secureTextEntry, ref, ...props }: FormTextInputProps) {
+export function FormTextInput({ label, error, hint, icon, prefix, style, onFocus, onBlur, secureTextEntry, ref, ...props }: FormTextInputProps) {
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const testID = props.testID;
@@ -37,6 +39,12 @@ export function FormTextInput({ label, error, hint, icon, style, onFocus, onBlur
         ]}
       >
         {icon ? <Icon name={icon} size={IconSize.md} color={BrandColors.textSecondary} /> : null}
+        {prefix ? (
+          <View style={styles.prefix} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+            <Text style={styles.prefixText}>{prefix}</Text>
+            <View style={styles.prefixDivider} />
+          </View>
+        ) : null}
         <TextInput
           {...props}
           secureTextEntry={hidden}
@@ -132,6 +140,22 @@ const styles = StyleSheet.create({
   },
   inputDisabled: {
     color: BrandColors.textDisabled,
+  },
+  prefix: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two + Spacing.half,
+  },
+  prefixText: {
+    fontSize: 16,
+    fontFamily: FontFamily.regular,
+    color: BrandColors.textSecondary,
+    writingDirection: 'ltr',
+  },
+  prefixDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: BrandColors.divider,
   },
   trailing: {
     width: 28,

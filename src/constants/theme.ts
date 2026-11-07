@@ -52,6 +52,8 @@ export const BrandColors = {
 
   // Semantic — error is a deep crimson so it reads differently from the brand red
   danger: '#9B1222',
+  /** Filled destructive buttons (white text, 5.9:1). */
+  dangerStrong: '#C0182B',
   dangerSoft: '#FDF0F1',
   success: '#126B34',
   successSoft: '#E8F6EC',

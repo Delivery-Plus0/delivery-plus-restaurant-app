@@ -155,6 +155,7 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
         <AppButton testID="item-editor-archive" title={t('Archive item')} variant="danger" disabled={saving} onPress={() => setConfirmingArchive(true)} />
       ) : null}
       <Dialog
+        icon="trash"
         visible={confirmingArchive}
         title={item ? t('Archive {name}?', { name: item.name }) : t('Archive this item?')}
         message={t("Customers stop seeing it and can't order it. Past orders keep it. This can't be undone from the app yet.")}

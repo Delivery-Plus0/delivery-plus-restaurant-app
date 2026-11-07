@@ -137,7 +137,7 @@ export default function ForgotPasswordScreen() {
           <FormTextInput
             testID="forgot-phone"
             label={t('Phone')}
-            icon="phone"
+            prefix="+20"
             value={phoneInput}
             onChangeText={(value) => {
               setPhoneInput(value);
