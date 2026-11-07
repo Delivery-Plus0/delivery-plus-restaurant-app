@@ -92,7 +92,7 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
   const show = (field: keyof typeof errors) => (submitted ? errors[field] : undefined);
 
   return (
-    <Sheet visible title={item ? `Edit ${item.name}` : 'New menu item'} onClose={onClose} testID="item-editor">
+    <Sheet visible title={item ? t('Edit {name}', { name: item.name }) : t('New menu item')} onClose={onClose} testID="item-editor">
       <FormTextInput
         testID="item-editor-name"
         label={t('Name')}
@@ -150,11 +150,12 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
         </ThemedText>
       )}
       {error ? <InlineAlert message={error} testID="item-editor-error" /> : null}
-      <AppButton testID="item-editor-save" title={item ? 'Save changes' : 'Add to menu'} loading={saving} onPress={() => void save()} />
+      <AppButton testID="item-editor-save" title={item ? t('Save changes') : t('Add to menu')} loading={saving} onPress={() => void save()} />
       {item ? (
         <AppButton testID="item-editor-archive" title={t('Archive item')} variant="danger" disabled={saving} onPress={() => setConfirmingArchive(true)} />
       ) : null}
       <Dialog
+        icon="trash"
         visible={confirmingArchive}
         title={item ? t('Archive {name}?', { name: item.name }) : t('Archive this item?')}
         message={t("Customers stop seeing it and can't order it. Past orders keep it. This can't be undone from the app yet.")}
@@ -228,7 +229,7 @@ function ItemPhoto({ restaurantId, item }: { restaurantId: string; item: MenuIte
       )}
       {busy ? (
         <ThemedText type="small" themeColor="textSecondary" testID="item-editor-photo-status">
-          {busy === 'uploading' ? 'Uploading…' : 'Removing…'}
+          {busy === 'uploading' ? t('Uploading…') : t('Removing…')}
         </ThemedText>
       ) : null}
       {error ? <InlineAlert message={error} testID="item-editor-photo-error" /> : null}
@@ -285,7 +286,7 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
   }
 
   return (
-    <Sheet visible title={category ? 'Rename category' : 'New category'} onClose={onClose} testID="category-editor">
+    <Sheet visible title={category ? t('Rename category') : t('New category')} onClose={onClose} testID="category-editor">
       <FormTextInput
         testID="category-editor-name"
         label={t('Name')}
@@ -296,7 +297,7 @@ export function CategorySheet({ restaurantId, category, nextDisplayOrder, onClos
         onSubmitEditing={() => void save()}
       />
       {error ? <InlineAlert message={error} testID="category-editor-error" /> : null}
-      <AppButton testID="category-editor-save" title={category ? 'Save' : 'Add category'} loading={saving} onPress={() => void save()} />
+      <AppButton testID="category-editor-save" title={category ? t('Save') : t('Add category')} loading={saving} onPress={() => void save()} />
     </Sheet>
   );
 }

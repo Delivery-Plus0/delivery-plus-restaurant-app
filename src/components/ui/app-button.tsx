@@ -1,9 +1,14 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/icon';
-import { BrandColors, IconSize, Layout, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, FontFamily, IconSize, Layout, Radius, Spacing } from '@/constants/theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+/**
+ * Figma "Button" (Redesign 2026): Primary (one per screen), Secondary (outline), Tonal (brand-subtle, e.g. Add),
+ * Ghost (text only), Danger (destructive entry points: crimson on crimson-subtle), Destructive (the filled
+ * crimson confirm button inside a destructive dialog).
+ */
+type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'danger' | 'destructive';
 
 type AppButtonProps = {
   title: string;
@@ -11,7 +16,8 @@ type AppButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   variant?: Variant;
-  size?: 'md' | 'sm';
+  /** md = 52 (main actions), sm = 44 (touch minimum), xs = 36 (dense rows and dashboards). */
+  size?: 'md' | 'sm' | 'xs';
   icon?: IconName;
   fullWidth?: boolean;
   accessibilityHint?: string;
@@ -20,9 +26,11 @@ type AppButtonProps = {
 
 const labelColor: Record<Variant, string> = {
   primary: BrandColors.onPrimary,
-  secondary: BrandColors.primaryText,
+  secondary: BrandColors.text,
+  tonal: BrandColors.primaryText,
   ghost: BrandColors.primaryText,
   danger: BrandColors.danger,
+  destructive: BrandColors.onPrimary,
 };
 
 export function AppButton({
@@ -38,7 +46,8 @@ export function AppButton({
   testID,
 }: AppButtonProps) {
   const isDisabled = disabled || loading;
-  const color = labelColor[variant];
+  // Disabled is a style of its own (muted fill and text), so it never relies on opacity alone.
+  const color = isDisabled && !loading ? BrandColors.textDisabled : labelColor[variant];
 
   return (
     <Pressable
@@ -52,10 +61,11 @@ export function AppButton({
       style={({ pressed }) => [
         styles.base,
         size === 'sm' && styles.small,
+        size === 'xs' && styles.xsmall,
         fullWidth && styles.fullWidth,
         styles[variant],
         pressed && pressedStyles[variant],
-        isDisabled && styles.disabled,
+        isDisabled && !loading && variant !== 'ghost' && styles.disabled,
       ]}
     >
       {loading ? (
@@ -63,7 +73,7 @@ export function AppButton({
       ) : (
         <View style={styles.content}>
           {icon ? <Icon name={icon} size={IconSize.sm} color={color} /> : null}
-          <Text style={[styles.label, size === 'sm' && styles.labelSmall, { color }]}>{title}</Text>
+          <Text style={[styles.label, size !== 'md' && styles.labelSmall, { color }]}>{title}</Text>
         </View>
       )}
     </Pressable>
@@ -73,15 +83,18 @@ export function AppButton({
 const styles = StyleSheet.create({
   base: {
     height: Layout.buttonHeight,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.four - Spacing.one,
   },
   small: {
     height: Layout.buttonHeightSm,
-    borderRadius: Radius.sm,
     paddingHorizontal: Spacing.three,
+  },
+  xsmall: {
+    height: Layout.buttonHeightXs,
+    paddingHorizontal: Spacing.two + Spacing.one,
   },
   fullWidth: {
     alignSelf: 'stretch',
@@ -97,7 +110,10 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: BrandColors.surface,
     borderWidth: 1,
-    borderColor: BrandColors.border,
+    borderColor: BrandColors.borderStrong,
+  },
+  tonal: {
+    backgroundColor: BrandColors.primarySoft,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -105,21 +121,30 @@ const styles = StyleSheet.create({
   danger: {
     backgroundColor: BrandColors.dangerSoft,
   },
+  destructive: {
+    backgroundColor: BrandColors.dangerStrong,
+  },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: BrandColors.disabledSurface,
+    borderColor: BrandColors.disabledSurface,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    fontFamily: FontFamily.semibold,
   },
   labelSmall: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 
 const pressedStyles = StyleSheet.create({
   primary: { backgroundColor: BrandColors.primaryPressed },
   secondary: { backgroundColor: BrandColors.surfaceMuted },
+  tonal: { backgroundColor: BrandColors.primarySoftStrong },
   ghost: { backgroundColor: BrandColors.primarySoft },
   danger: { opacity: 0.8 },
+  destructive: { backgroundColor: BrandColors.danger },
 });

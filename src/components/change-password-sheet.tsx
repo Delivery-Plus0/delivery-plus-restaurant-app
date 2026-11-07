@@ -67,6 +67,7 @@ export function ChangePasswordSheet({ onClose, onChanged }: ChangePasswordSheetP
         <FormTextInput
           testID="change-password-current"
           label={t('Current password')}
+          icon="lock"
           value={current}
           onChangeText={edit(setCurrent)}
           error={submitted ? currentError : undefined}
@@ -81,6 +82,7 @@ export function ChangePasswordSheet({ onClose, onChanged }: ChangePasswordSheetP
           testID="change-password-new"
           ref={nextRef}
           label={t('New password')}
+          icon="lock"
           value={next}
           onChangeText={edit(setNext)}
           error={submitted ? nextError : undefined}
@@ -96,6 +98,7 @@ export function ChangePasswordSheet({ onClose, onChanged }: ChangePasswordSheetP
           testID="change-password-confirm"
           ref={confirmRef}
           label={t('Confirm new password')}
+          icon="lock"
           value={confirmation}
           onChangeText={edit(setConfirmation)}
           error={submitted ? confirmError : undefined}

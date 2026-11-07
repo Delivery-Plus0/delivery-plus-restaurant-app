@@ -1,26 +1,27 @@
 import { useCallback, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { ChangePasswordSheet } from '@/components/change-password-sheet';
+import { SIDEBAR_MIN_WIDTH } from '@/components/dashboard-sidebar';
 import { OrderDetailSheet } from '@/components/order-detail-sheet';
 import { RestaurantOrderCard } from '@/components/restaurant-order-card';
 import { RestaurantPicker } from '@/components/restaurant-picker';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Dialog } from '@/components/ui/dialog';
 import { Icon } from '@/components/ui/icon';
+import { IconButton } from '@/components/ui/icon-button';
 import { InlineAlert } from '@/components/ui/inline-alert';
-import { Screen, ScreenHeader } from '@/components/ui/screen';
+import { Screen } from '@/components/ui/screen';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Toast } from '@/components/ui/toast';
 import { ErrorState, StateView } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
-import { ApiError, signOut as endSession } from '@/services/api';
-import type { KitchenStatus, RestaurantOrder, TodaySummary } from '@/services/restaurant-orders';
+import { ApiError } from '@/services/api';
+import type { KitchenStatus, RestaurantOrder } from '@/services/restaurant-orders';
 import type { Restaurant } from '@/services/restaurants';
 import { useAuthSession } from '@/services/session';
+import { openAccountAction } from '@/state/account-ui';
 import { advanceOrder, ORDERS_POLL_MS, selectRestaurantId, useRestaurantOrders, useSelectedRestaurant, useTodaySummary } from '@/state/restaurant';
 import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
@@ -43,52 +44,41 @@ export default function HomeScreen() {
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const hideNotice = useCallback(() => setNotice(null), []);
-  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
+  const [lane, setLane] = useState<KitchenLaneStatus>('CONFIRMED');
   const otherLocale = useLocale() === 'ar' ? 'en' : 'ar';
-
-  async function signOut() {
-    setConfirmingSignOut(false);
-    await endSession();
-  }
+  const sidebar = width >= SIDEBAR_MIN_WIDTH;
 
   async function refreshAll() {
     await Promise.all([restaurants.refresh(), restaurant ? orders.refresh() : Promise.resolve(), restaurant ? today.refresh() : Promise.resolve()]);
   }
 
-  const columns = width >= WIDE ? 3 : width >= MEDIUM ? 2 : 1;
+  // Figma R-03: three lanes side by side on wide screens. R-20/R-22: one lane at a time on phones and tablets,
+  // picked with a switcher; tablets show its tickets in two columns.
+  const sideBySide = width >= WIDE;
+  const ticketColumns = sideBySide ? 1 : width >= MEDIUM ? 2 : 1;
   const { lanes, other } = groupOrdersByLane(orders.data?.items ?? []);
   // Read from the latest board data, so the sheet follows the order as it moves.
   const openOrder = orders.data?.items.find((order) => order.id === openOrderId) ?? null;
+  const shownLanes = sideBySide ? KITCHEN_LANES : KITCHEN_LANES.filter((item) => item.status === lane);
 
   return (
     <Screen>
-      <ScreenHeader
-        title={restaurant?.name ?? t('Delivery Plus Restaurant')}
-        subtitle={session?.user.email}
-        right={
-          <View style={styles.headerActions}>
-            {/* #151: switches to the other language; always in view, unlike a control below the board. */}
-            <AppButton
-              testID={`language-${otherLocale}`}
-              title={LOCALE_NAMES[otherLocale]}
-              variant="ghost"
-              size="sm"
-              fullWidth={false}
-              onPress={() => void setLocale(otherLocale)}
-            />
-            <AppButton
-              testID="change-password"
-              title={t('Change password')}
-              variant="ghost"
-              size="sm"
-              fullWidth={false}
-              onPress={() => setChangingPassword(true)}
-            />
-            <AppButton testID="sign-out" title={t('Sign out')} icon="logout" variant="ghost" size="sm" fullWidth={false} onPress={() => setConfirmingSignOut(true)} />
+      {sidebar ? null : (
+        // Phones and tablets (Figma R-20): the restaurant, then language, password and sign out as icons.
+        <View style={styles.compactHeader}>
+          <View style={styles.flex}>
+            <ThemedText type="defaultBold" numberOfLines={1}>
+              {restaurant?.name ?? t('Delivery Plus Restaurant')}
+            </ThemedText>
+            <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
+              {session?.user.email}
+            </ThemedText>
           </View>
-        }
-      />
+          <IconButton testID={`language-${otherLocale}`} icon="language" variant="plain" accessibilityLabel={LOCALE_NAMES[otherLocale]} onPress={() => void setLocale(otherLocale)} />
+          <IconButton testID="change-password" icon="lock" variant="plain" accessibilityLabel={t('Change password')} onPress={() => openAccountAction('password')} />
+          <IconButton testID="sign-out" icon="logout" variant="plain" accessibilityLabel={t('Sign out')} onPress={() => openAccountAction('sign-out')} />
+        </View>
+      )}
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={restaurants.refreshing || orders.refreshing} onRefresh={() => void refreshAll()} />}>
@@ -105,17 +95,11 @@ export default function HomeScreen() {
           />
         ) : (
           <>
-            <RestaurantPicker restaurants={restaurants.data ?? []} selectedId={restaurant.id} onSelect={selectRestaurantId} />
-
-            <RestaurantCard
-              restaurant={restaurant}
-              counts={KITCHEN_LANES.map((lane) => ({ label: lane.title, value: lanes[lane.status].length }))}
-              today={today.data}
-            />
+            {sidebar ? null : <RestaurantPicker restaurants={restaurants.data ?? []} selectedId={restaurant.id} onSelect={selectRestaurantId} />}
 
             <View style={styles.boardHeader}>
               <View style={styles.flex}>
-                <ThemedText type="subtitle" accessibilityRole="header">
+                <ThemedText type={sidebar ? 'title' : 'subtitle'} accessibilityRole="header">
                   {t('Kitchen orders')}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
@@ -134,6 +118,23 @@ export default function HomeScreen() {
               />
             </View>
 
+            <RestaurantStrip restaurant={restaurant} />
+
+            <View style={styles.kpis} testID="today-summary" nativeID="today-summary">
+              {KITCHEN_LANES.map((item) => (
+                <Kpi key={item.status} label={item.title} value={String(lanes[item.status].length)} note={item.note} tone={LANE_TONES[item.status]} />
+              ))}
+              {/* Today in Cairo, from the backend (#154): item revenue only, without delivery fees or cancelled orders. */}
+              <Kpi
+                label={t('Today')}
+                value={today.data ? formatMoney(today.data.revenue) : '…'}
+                note={today.data ? todayOrdersLabel(today.data.orders) : ''}
+                tone="success"
+                valueTestID="today-revenue"
+                noteTestID="today-orders"
+              />
+            </View>
+
             {orders.isLoading ? (
               <SkeletonList count={3} itemHeight={140} />
             ) : orders.error && orders.data === undefined ? (
@@ -141,23 +142,47 @@ export default function HomeScreen() {
             ) : (
               <>
                 {orders.error ? <InlineAlert message={t("Couldn't refresh the orders. Showing the last ones loaded.")} testID="orders-stale" /> : null}
+                {sideBySide ? null : (
+                  <View style={styles.laneSwitch} accessibilityRole="tablist">
+                    {KITCHEN_LANES.map((item) => {
+                      const selected = item.status === lane;
+                      return (
+                        <Pressable
+                          key={item.status}
+                          testID={`lane-switch-${item.status}`}
+                          nativeID={`lane-switch-${item.status}`}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected }}
+                          onPress={() => setLane(item.status)}
+                          style={[styles.laneTab, selected && styles.laneTabSelected]}
+                        >
+                          <ThemedText type="caption" themeColor={selected ? 'text' : 'textSecondary'} numberOfLines={1} style={styles.laneTabTitle}>
+                            {item.title}
+                          </ThemedText>
+                          <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'} style={styles.tabular}>
+                            {lanes[item.status].length}
+                          </ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
                 <View style={styles.board}>
-                  {KITCHEN_LANES.map((lane) => (
-                    <View key={lane.status} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
-                      <LaneHeader title={lane.title} note={lane.note} count={lanes[lane.status].length} testID={`lane-${lane.status}`} />
-                      {lanes[lane.status].length ? (
-                        // Keyed by status too: a newer server state starts the card fresh, dropping an earlier error.
-                        lanes[lane.status].map((order) => (
-                          <KitchenOrder
-                            key={`${order.id}:${order.status}`}
-                            restaurantId={restaurant.id}
-                            order={order}
-                            onOpen={() => setOpenOrderId(order.id)}
-                            onDone={setNotice}
-                          />
-                        ))
+                  {shownLanes.map((item) => (
+                    <View key={item.status} style={[styles.lane, sideBySide ? styles.laneThird : styles.laneFull]}>
+                      <LaneHeader title={item.title} note={item.note} count={lanes[item.status].length} testID={`lane-${item.status}`} />
+                      {lanes[item.status].length ? (
+                        <View style={[styles.tickets, ticketColumns === 2 && styles.ticketsTwo]}>
+                          {/* Keyed by status too: a newer server state starts the card fresh, dropping an earlier error. */}
+                          {lanes[item.status].map((order) => (
+                            <View key={`${order.id}:${order.status}`} style={ticketColumns === 2 ? styles.ticketHalf : null}>
+                              <KitchenOrder restaurantId={restaurant.id} order={order} onOpen={() => setOpenOrderId(order.id)} onDone={setNotice} />
+                            </View>
+                          ))}
+                        </View>
                       ) : (
                         <View style={styles.emptyLane}>
+                          <Icon name="clock" size={IconSize.md} color={BrandColors.textMuted} />
                           <ThemedText type="small" themeColor="textSecondary">
                             {t('Nothing here')}
                           </ThemedText>
@@ -172,6 +197,7 @@ export default function HomeScreen() {
                     <AppButton
                       testID="orders-toggle-other"
                       title={showOther ? t('Hide other orders') : t('Show other orders ({count})', { count: other.length })}
+                      icon={showOther ? 'close' : 'orders'}
                       variant="ghost"
                       size="sm"
                       fullWidth={false}
@@ -180,7 +206,7 @@ export default function HomeScreen() {
                     {showOther ? (
                       <View style={[styles.board, styles.otherList]}>
                         {other.map((order) => (
-                          <View key={order.id} style={[styles.lane, { width: columns === 1 ? '100%' : columns === 2 ? '48.5%' : '31.8%' }]}>
+                          <View key={order.id} style={[styles.lane, sideBySide ? styles.laneThird : ticketColumns === 2 ? styles.ticketHalf : styles.laneFull]}>
                             <RestaurantOrderCard order={order} onOpen={() => setOpenOrderId(order.id)} />
                           </View>
                         ))}
@@ -204,72 +230,60 @@ export default function HomeScreen() {
           }}
         />
       ) : null}
-      {changingPassword ? (
-        <ChangePasswordSheet
-          onClose={() => setChangingPassword(false)}
-          onChanged={() => {
-            setChangingPassword(false);
-            setNotice(t('Password changed. Your other devices were signed out.'));
-          }}
-        />
-      ) : null}
       <Toast message={notice} onHide={hideNotice} testID="board-notice" />
-      <Dialog
-        visible={confirmingSignOut}
-        title={t('Sign out?')}
-        message={t('You can sign back in at any time.')}
-        confirmLabel={t('Sign out')}
-        onConfirm={() => void signOut()}
-        onCancel={() => setConfirmingSignOut(false)}
-        testID="sign-out-dialog"
-      />
     </Screen>
   );
 }
 
-function RestaurantCard({ restaurant, counts, today }: { restaurant: Restaurant; counts: { label: string; value: number }[]; today?: TodaySummary }) {
+type KitchenLaneStatus = (typeof KITCHEN_LANES)[number]['status'];
+const LANE_TONES: Record<KitchenLaneStatus, BadgeTone> = { CONFIRMED: 'info', PREPARING: 'warning', READY_FOR_PICKUP: 'brand' };
+const TONE_DOTS: Record<BadgeTone, string> = {
+  info: BrandColors.info,
+  warning: BrandColors.warning,
+  brand: BrandColors.primary,
+  success: BrandColors.success,
+  neutral: BrandColors.textMuted,
+  danger: BrandColors.danger,
+};
+
+/** The restaurant, its status, and how often the board checks (Figma R-03 strip). */
+function RestaurantStrip({ restaurant }: { restaurant: Restaurant }) {
   const status = RESTAURANT_STATUS_META[restaurant.status];
   return (
-    <Card testID="restaurant-heading">
-      <View style={styles.row}>
-        <View style={styles.restaurantIcon}>
-          <Icon name="store" size={IconSize.md} color={BrandColors.primaryText} />
-        </View>
-        <View style={styles.flex}>
-          <ThemedText type="defaultBold" numberOfLines={1}>
-            {restaurant.name}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-            {restaurant.address}
-          </ThemedText>
-        </View>
-        <Badge label={status.label} tone={status.tone} testID="restaurant-status" />
+    <Card testID="restaurant-heading" style={styles.strip}>
+      <View style={styles.restaurantIcon}>
+        <Icon name="store" size={IconSize.md} color={BrandColors.primary} />
       </View>
-      <View style={styles.counts}>
-        {counts.map((count) => (
-          <View key={count.label} style={styles.count}>
-            <ThemedText type="subtitle" style={styles.countValue}>
-              {count.value}
-            </ThemedText>
-            <ThemedText type="caption" themeColor="textSecondary">
-              {count.label}
-            </ThemedText>
-          </View>
-        ))}
-      </View>
-      {/* Today in Cairo, from the backend (#154): item revenue only, without delivery fees or cancelled orders. */}
-      <View style={styles.today} testID="today-summary" nativeID="today-summary">
-        <ThemedText type="caption" themeColor="textSecondary" style={styles.flex}>
-          {t('Today')}
+      <View style={styles.flex}>
+        <ThemedText type="defaultBold" numberOfLines={1}>
+          {restaurant.name}
         </ThemedText>
-        <ThemedText type="smallBold" testID="today-orders">
-          {today ? todayOrdersLabel(today.orders) : '…'}
-        </ThemedText>
-        <ThemedText type="smallBold" style={styles.countValue} testID="today-revenue">
-          {today ? formatMoney(today.revenue) : ''}
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          {restaurant.address}
         </ThemedText>
       </View>
+      <Badge label={status.label} tone={status.tone} testID="restaurant-status" />
     </Card>
+  );
+}
+
+/** A number tile (Figma R-03 KPIs): label with a status dot, the value, and a short note. */
+function Kpi({ label, value, note, tone, valueTestID, noteTestID }: { label: string; value: string; note: string; tone: BadgeTone; valueTestID?: string; noteTestID?: string }) {
+  return (
+    <View style={styles.kpi}>
+      <View style={styles.kpiLabel}>
+        <View style={[styles.kpiDot, { backgroundColor: TONE_DOTS[tone] }]} />
+        <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1} style={styles.flex}>
+          {label}
+        </ThemedText>
+      </View>
+      <ThemedText type="subtitle" style={styles.tabular} testID={valueTestID} numberOfLines={1}>
+        {value}
+      </ThemedText>
+      <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1} testID={noteTestID}>
+        {note}
+      </ThemedText>
+    </View>
   );
 }
 
@@ -325,10 +339,16 @@ function KitchenOrder({
 }
 
 const styles = StyleSheet.create({
-  headerActions: {
+  compactHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
+    paddingStart: Spacing.three,
+    paddingEnd: Spacing.two,
+    paddingVertical: Spacing.two,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: BrandColors.border,
+    backgroundColor: BrandColors.surface,
   },
   content: {
     padding: Spacing.three,
@@ -345,6 +365,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
+  strip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
   restaurantIcon: {
     width: 40,
     height: 40,
@@ -353,32 +378,60 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: BrandColors.primarySoft,
   },
-  counts: {
+  kpis: {
     flexDirection: 'row',
-    marginTop: Spacing.three,
-    paddingTop: Spacing.three,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.divider,
+    flexWrap: 'wrap',
+    gap: Spacing.three - Spacing.one,
   },
-  count: {
-    flex: 1,
+  kpi: {
+    flexGrow: 1,
+    flexBasis: 150,
+    gap: Spacing.half,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: BrandColors.divider,
+    backgroundColor: BrandColors.surface,
   },
-  countValue: {
-    fontVariant: ['tabular-nums'],
-  },
-  today: {
+  kpiLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
-    marginTop: Spacing.three,
-    paddingTop: Spacing.two,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.divider,
+    gap: Spacing.one + Spacing.half,
+  },
+  kpiDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  tabular: {
+    fontVariant: ['tabular-nums'],
   },
   boardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
+  },
+  laneSwitch: {
+    flexDirection: 'row',
+    padding: Spacing.one,
+    gap: Spacing.one,
+    borderRadius: Radius.sm,
+    backgroundColor: BrandColors.divider,
+  },
+  laneTab: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: Spacing.one,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.sm - Spacing.one,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  laneTabTitle: {
+    textAlign: 'center',
+  },
+  laneTabSelected: {
+    backgroundColor: BrandColors.surface,
   },
   board: {
     flexDirection: 'row',
@@ -390,21 +443,39 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     minWidth: 0,
   },
+  laneThird: {
+    width: '31.8%',
+    padding: Spacing.two,
+    borderRadius: Radius.md,
+    backgroundColor: BrandColors.surfaceMuted,
+  },
+  laneFull: {
+    width: '100%',
+  },
+  tickets: {
+    gap: Spacing.three,
+  },
+  ticketsTwo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  ticketHalf: {
+    width: '48.5%',
+  },
   laneHeader: {
     gap: Spacing.one,
     paddingBottom: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.border,
+    paddingHorizontal: Spacing.one,
   },
   emptyLane: {
-    minHeight: 80,
+    minHeight: 120,
+    gap: Spacing.one,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: BrandColors.border,
-    backgroundColor: BrandColors.surfaceMuted,
+    borderColor: BrandColors.borderStrong,
   },
   other: {
     alignItems: 'flex-start',

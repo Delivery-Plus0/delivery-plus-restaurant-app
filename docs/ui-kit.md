@@ -30,8 +30,16 @@ Don't use the native `Alert` or `window.confirm` for decisions. They look differ
 - Dialogs and sheets are modal (`accessibilityViewIsModal`) and close with the system back button. Toasts are announced (live region, plus `announceForAccessibility` on native).
 - Give every interactive element a `testID`. The kit mirrors it to `nativeID`, so web flows find it as well.
 - Lay out with `start`/`end` (and `paddingHorizontal`/`gap`), never `left`/`right`, so the kit works right-to-left for Arabic (#151).
-- Directional icons (`back`, `chevronRight`) mirror themselves in Arabic: `Icon` flips them when the layout is right to left. Don't flip them yourself. A new icon that points along the reading direction belongs in `DIRECTIONAL` in `ui/icon.tsx`.
+- Directional icons (`back`, `chevronRight`, `logout`) mirror themselves in Arabic: `Icon` flips them when the layout is right to left, on every platform. Don't flip them yourself. A new icon that points along the reading direction belongs in `DIRECTIONAL` in `ui/icon.tsx`.
 - Tab bars use `TabBar.style` and `TabBar.labelStyle` from `constants/theme.ts`, which leave room for the whole label on the web.
+
+## Look and feel (Redesign 2026)
+
+The kit follows the Figma file "Delivery Plus — Product Redesign 2026" (00 System page).
+
+- **Colors:** use `BrandColors` from `constants/theme.ts`, never a hex in a screen. Brand red `#D81A14` (pressed and red text `#B3140F`), parcel gold `#F2C97E`, warm neutrals, and crimson `#9B1222` for errors so they read differently from the brand.
+- **Type:** Readex Pro for Arabic and Latin, loaded in `src/app/_layout.tsx` before the splash hides. Custom fonts ignore `fontWeight` on Android, so each weight is its own family. `ThemedText` picks the family from the final weight by itself. A raw `Text` or `TextInput` sets `fontFamily: FontFamily.<weight>` (or `fontFamilyFor(weight)`) next to its `fontWeight`.
+- **Icons:** `Icon` draws [Lucide](https://lucide.dev) outline icons (`lucide-react-native` + `react-native-svg`), the same glyphs on iOS, Android and the web. Add a name to the `icons` map in `ui/icon.tsx`; screens only ever use the names.
 
 ## Counted nouns
 

@@ -12,6 +12,8 @@ export const kitArabic: Readonly<Record<string, string>> = {
   'Something went wrong. Please try again.': 'حدث خطأ ما. حاول مرة أخرى.',
   'You appear to be offline': 'يبدو أنك غير متصل بالإنترنت',
   'Delivery Plus': 'ديليفري بلس',
+  'Show password': 'إظهار كلمة المرور',
+  'Hide password': 'إخفاء كلمة المرور',
 
   // API client
   'Delivery Plus is having trouble right now. Please try again shortly.': 'تواجه ديليفري بلس مشكلة الآن. حاول مرة أخرى بعد قليل.',
