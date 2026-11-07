@@ -137,6 +137,8 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.regular,
     color: BrandColors.text,
     paddingVertical: 0,
+    // The field draws its own focus border; drop the browser's ring on web.
+    outlineWidth: 0,
   },
   inputDisabled: {
     color: BrandColors.textDisabled,
