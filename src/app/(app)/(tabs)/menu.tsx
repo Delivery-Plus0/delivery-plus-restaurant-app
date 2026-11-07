@@ -163,7 +163,7 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
               />
             ))}
             {category ? (
-              <AppButton testID={`category-${section.id}-add-item`} title={`Add an item to ${section.title}`} variant="ghost" size="sm" onPress={() => setEditing({ kind: 'item', item: null, categoryId: section.id })} />
+              <AppButton testID={`category-${section.id}-add-item`} title={t('Add an item to {category}', { category: section.title })} variant="ghost" size="sm" onPress={() => setEditing({ kind: 'item', item: null, categoryId: section.id })} />
             ) : null}
           </Card>
           );
@@ -292,7 +292,7 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
             {formatMoney(item.price)}
           </ThemedText>
         </View>
-        <Badge label={item.available ? 'Available' : 'Sold out'} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
+        <Badge label={item.available ? t('Available') : t('Sold out')} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
         <AppButton
           testID={`item-${item.id}-toggle`}
           title={item.available ? t('Mark sold out') : t('Mark available')}
