@@ -191,7 +191,7 @@ export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
  * lower half. The label no longer shrinks, and the web bar is tall enough for icon + label.
  */
 export const TabBar = {
-  style: Platform.select({ web: { height: 64, paddingTop: 4, paddingBottom: 4 }, default: {} }),
+  style: Platform.select({ web: { height: 70, paddingTop: 6, paddingBottom: 6 }, default: {} }),
   labelStyle: { fontSize: 12, lineHeight: 18, fontWeight: '600' as const, fontFamily: FontFamily.semibold, flexShrink: 0 },
 } as const;
 export const MaxContentWidth = 800;

@@ -13,11 +13,13 @@ const toneColors: Record<BadgeTone, { background: string; text: string }> = {
   info: { background: BrandColors.infoSoft, text: BrandColors.info },
 };
 
-export function Badge({ label, tone = 'neutral', testID }: { label: string; tone?: BadgeTone; testID?: string }) {
+/** Figma "Badge" (Redesign 2026): a dot plus the label, so colour is never the only signal. */
+export function Badge({ label, tone = 'neutral', dot = true, testID }: { label: string; tone?: BadgeTone; dot?: boolean; testID?: string }) {
   const colors = toneColors[tone];
 
   return (
     <View style={[styles.badge, { backgroundColor: colors.background }]}>
+      {dot ? <View style={[styles.dot, { backgroundColor: colors.text }]} /> : null}
       {/* The id sits on the text node so UI tests can match id + label together. */}
       <Text style={[styles.label, { color: colors.text }]} numberOfLines={1} testID={testID} nativeID={testID}>
         {label}

@@ -1,11 +1,11 @@
 import {
   ArrowLeft,
+  Check,
   Bell,
   CheckCheck,
   ChevronRight,
   CircleAlert,
   CircleCheck,
-  CircleUserRound,
   CircleX,
   Clock,
   Eye,
@@ -25,6 +25,7 @@ import {
   ReceiptText,
   RefreshCw,
   Search,
+  ShieldCheck,
   ShoppingBag,
   Store,
   Trash2,
@@ -35,7 +36,7 @@ import {
   WifiOff,
   X,
 } from 'lucide-react-native';
-import { I18nManager, Platform, type ColorValue } from 'react-native';
+import { I18nManager, Platform, View, type ColorValue } from 'react-native';
 
 import { BrandColors, IconSize } from '@/constants/theme';
 import { isRTL, useLocale } from '@/i18n';
@@ -50,7 +51,7 @@ const icons = {
   home: House,
   orders: ReceiptText,
   bell: Bell,
-  person: CircleUserRound,
+  person: UserRound,
   bag: ShoppingBag,
   search: Search,
   plus: Plus,
@@ -74,6 +75,8 @@ const icons = {
   offline: WifiOff,
   wallet: Wallet,
   directions: Navigation,
+  checkMark: Check,
+  shield: ShieldCheck,
   eye: Eye,
   eyeOff: EyeOff,
   lock: Lock,
@@ -109,3 +112,15 @@ export function Icon({ name, size = IconSize.md, color = BrandColors.text }: Ico
 }
 
 const MIRRORED = { transform: [{ scaleX: -1 }] };
+
+/** Tab-bar icon (Figma bottom nav): the active tab sits in a brand-subtle pill. */
+export function TabBarIcon({ name, color, focused }: { name: IconName; color: ColorValue; focused: boolean }) {
+  return (
+    <View style={[TAB_PILL, focused && TAB_PILL_ACTIVE]}>
+      <Icon name={name} color={color} size={22} />
+    </View>
+  );
+}
+
+const TAB_PILL = { width: 60, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' } as const;
+const TAB_PILL_ACTIVE = { backgroundColor: BrandColors.primarySoft } as const;
