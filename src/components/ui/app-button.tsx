@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/icon';
-import { BrandColors, IconSize, Layout, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, FontFamily, IconSize, Layout, Radius, Spacing } from '@/constants/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -110,7 +110,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: FontFamily.semibold,
   },
   labelSmall: {
     fontSize: 14,

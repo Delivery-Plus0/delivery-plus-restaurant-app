@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, FontFamily, Radius, Spacing } from '@/constants/theme';
 
 export type BadgeTone = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -37,5 +37,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
 });

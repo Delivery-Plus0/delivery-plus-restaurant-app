@@ -1,7 +1,7 @@
 import { useState, type Ref } from 'react';
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 
-import { BrandColors, Layout, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, FontFamily, Layout, Radius, Spacing } from '@/constants/theme';
 
 type FormTextInputProps = TextInputProps & {
   label: string;
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '700',
+    fontFamily: FontFamily.bold,
     color: BrandColors.text,
     marginBottom: Spacing.two,
   },
@@ -61,6 +62,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.three,
     fontSize: 16,
+    fontFamily: FontFamily.regular,
     backgroundColor: BrandColors.surface,
     color: BrandColors.text,
   },
@@ -75,10 +77,12 @@ const styles = StyleSheet.create({
     color: BrandColors.danger,
     fontSize: 13,
     fontWeight: '600',
+    fontFamily: FontFamily.semibold,
   },
   hintText: {
     marginTop: Spacing.one,
     color: BrandColors.textSecondary,
     fontSize: 13,
+    fontFamily: FontFamily.regular,
   },
 });

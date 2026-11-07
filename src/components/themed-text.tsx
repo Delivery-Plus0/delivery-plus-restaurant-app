@@ -1,6 +1,6 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
-import { BrandColors, Fonts, ThemeColor } from '@/constants/theme';
+import { BrandColors, Fonts, fontFamilyFor, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -21,14 +21,26 @@ export type ThemedTextProps = TextProps & {
 
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
+  const family = textFontFamily(type, style);
 
   return (
     <Text
-      style={[{ color: theme[themeColor ?? 'text'] }, styles[type], style]}
+      style={[{ color: theme[themeColor ?? 'text'] }, styles[type], style, family ? { fontFamily: family } : null]}
       nativeID={rest.nativeID ?? rest.testID}
       {...rest}
     />
   );
+}
+
+/**
+ * Readex Pro has one family per weight (Android ignores `fontWeight` on custom fonts), so the family follows
+ * the final weight, including a weight set by the caller's style. An explicit non-Readex family (mono) wins.
+ */
+export function textFontFamily(type: NonNullable<ThemedTextProps['type']>, style: TextProps['style']): string | null {
+  if (type === 'code') return null;
+  const flat: TextStyle = StyleSheet.flatten([styles[type], style]) ?? {};
+  if (flat.fontFamily && !flat.fontFamily.startsWith('ReadexPro')) return null;
+  return fontFamilyFor(flat.fontWeight);
 }
 
 const styles = StyleSheet.create({

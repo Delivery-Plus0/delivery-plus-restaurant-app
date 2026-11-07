@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/icon';
-import { BrandColors, IconSize, Layout, Radius } from '@/constants/theme';
+import { BrandColors, FontFamily, IconSize, Layout, Radius } from '@/constants/theme';
 
 type IconButtonProps = {
   icon: IconName;
@@ -87,5 +87,6 @@ const styles = StyleSheet.create({
     color: BrandColors.onPrimary,
     fontSize: 10,
     fontWeight: '700',
+    fontFamily: FontFamily.bold,
   },
 });
