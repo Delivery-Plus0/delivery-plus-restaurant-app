@@ -32,7 +32,7 @@
     "src/i18n/coverage.test.ts": "6500d72d529c6c82931cf3a26d931ce28368c077b0a3bafe133dc7b84d08da0b",
     "src/i18n/device.ts": "a2f5cd1a34314480a057705e475fb8f211cd48b26d2eb0a8b57ab5b0f881222d",
     "src/i18n/index.ts": "dfe6a2e9a3b1b93f32af4417f745569834f5bc18cc9c935dd9d4d3f79884cede",
-    "src/i18n/kit-ar.ts": "2827a47405025a33c95c4acc7d1eaf832fac4ee153db95f0b28fa53eceefa80e",
+    "src/i18n/kit-ar.ts": "a4edea61a0972f3a2f808ee038c79da420b0e20bc2bde78d5abf9249f423e9a3",
     "src/services/api.errors.test.ts": "311b283aaf2f0907b591e20d7c02153032d09dc9a48d361bcadb51886468a47c",
     "src/services/api.test.ts": "05b14cf9c19adc05dcfd9bfbd9317d537477fdb06b927b4007bbd3aa94cb774c",
     "src/services/api.ts": "12282893adbc58cf756859c72c6d36d62e0279eadf05cd29462b4c77460be52a",
