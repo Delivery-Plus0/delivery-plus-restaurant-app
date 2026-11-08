@@ -6,7 +6,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   'Edit {name}': 'تعديل {name}',
   'New menu item': 'صنف جديد',
   'Save changes': 'حفظ التغييرات',
-  'Add to menu': 'إضافة للمنيو',
+  'Add to menu': 'إضافة إلى القائمة',
   'Uploading…': 'جارٍ الرفع…',
   'Removing…': 'جارٍ الإزالة…',
   'Rename category': 'إعادة تسمية الفئة',
@@ -19,9 +19,9 @@ export const appArabic: Readonly<Record<string, string>> = {
   Order: 'طلب',
   // Desktop sign-in brand panel (Redesign 2026, R-01)
   'Your kitchen order desk': 'لوحة طلبات مطبخك',
-  'New paid orders arrive automatically': 'الطلبات المدفوعة الجديدة توصل تلقائيًا',
-  'Move each order from kitchen to pickup': 'انقل كل طلب من المطبخ للاستلام',
-  'Keep your menu and availability up to date': 'خلّي المنيو والتوفّر محدّثين',
+  'New paid orders arrive automatically': 'تصلك الطلبات المدفوعة الجديدة تلقائيًا',
+  'Move each order from kitchen to pickup': 'انقل كل طلب من المطبخ إلى الاستلام',
+  'Keep your menu and availability up to date': 'حافظ على تحديث القائمة وتوفّر الأصناف',
   'Delivery Plus · Restaurant': 'ديليفري بلس · المطاعم',
   // Tabs
   Orders: 'الطلبات',
@@ -69,7 +69,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   Open: 'مفتوح',
   'Customers can order': 'يمكن للعملاء الطلب',
   Busy: 'مشغول',
-  'Shown as busy to customers': 'يظهر للعملاء كمشغول',
+  'No new orders for now: customers are asked to try again in a few minutes': 'لا طلبات جديدة مؤقتًا: يُطلب من العملاء المحاولة بعد بضع دقائق',
   Closed: 'مغلق',
   'No new orders': 'لا طلبات جديدة',
 
