@@ -1,53 +1,106 @@
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { I18nManager, Platform, type ColorValue } from 'react-native';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Check,
+  Bell,
+  CheckCheck,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  CircleX,
+  Clock,
+  Eye,
+  EyeOff,
+  House,
+  Languages,
+  Lock,
+  LogOut,
+  type LucideIcon,
+  Mail,
+  MapPin,
+  Minus,
+  Navigation,
+  Pencil,
+  Phone,
+  Plus,
+  Power,
+  ReceiptText,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  Store,
+  Trash2,
+  Truck,
+  UserRound,
+  UtensilsCrossed,
+  Wallet,
+  WifiOff,
+  X,
+} from 'lucide-react-native';
+import { I18nManager, Platform, View, type ColorValue } from 'react-native';
 
 import { BrandColors, IconSize } from '@/constants/theme';
 import { isRTL, useLocale } from '@/i18n';
 
+/**
+ * Lucide icons (Redesign 2026): the same outline glyphs on iOS, Android and the web, matching the Figma
+ * icon set. Screens use these names only, so swapping a glyph never touches a screen.
+ */
 const icons = {
-  back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
-  chevronRight: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
-  home: { ios: 'house', android: 'home', web: 'home' },
-  orders: { ios: 'receipt', android: 'receipt_long', web: 'receipt_long' },
-  bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
-  person: { ios: 'person.crop.circle', android: 'person', web: 'person' },
-  bag: { ios: 'bag', android: 'shopping_bag', web: 'shopping_bag' },
-  search: { ios: 'magnifyingglass', android: 'search', web: 'search' },
-  plus: { ios: 'plus', android: 'add', web: 'add' },
-  minus: { ios: 'minus', android: 'remove', web: 'remove' },
-  trash: { ios: 'trash', android: 'delete', web: 'delete' },
-  close: { ios: 'xmark', android: 'close', web: 'close' },
-  check: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
-  checkAll: { ios: 'checkmark.circle', android: 'done_all', web: 'done_all' },
-  cancel: { ios: 'xmark.circle.fill', android: 'cancel', web: 'cancel' },
-  refresh: { ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' },
-  store: { ios: 'storefront', android: 'storefront', web: 'storefront' },
-  food: { ios: 'fork.knife', android: 'restaurant', web: 'restaurant' },
-  clock: { ios: 'clock', android: 'schedule', web: 'schedule' },
-  location: { ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' },
-  delivery: { ios: 'box.truck', android: 'local_shipping', web: 'local_shipping' },
-  mail: { ios: 'envelope', android: 'mail', web: 'mail' },
-  phone: { ios: 'phone', android: 'phone', web: 'phone' },
-  edit: { ios: 'pencil', android: 'edit', web: 'edit' },
-  logout: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
-  error: { ios: 'exclamationmark.circle', android: 'error_outline', web: 'error_outline' },
-  offline: { ios: 'wifi.slash', android: 'cloud_off', web: 'cloud_off' },
-  wallet: { ios: 'creditcard', android: 'account_balance_wallet', web: 'account_balance_wallet' },
-  directions: { ios: 'arrow.triangle.turn.up.right.diamond', android: 'directions', web: 'directions' },
-} as const satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
+  back: ArrowLeft,
+  chevronRight: ChevronRight,
+  home: House,
+  orders: ReceiptText,
+  bell: Bell,
+  person: UserRound,
+  bag: ShoppingBag,
+  search: Search,
+  plus: Plus,
+  minus: Minus,
+  trash: Trash2,
+  close: X,
+  check: CircleCheck,
+  checkAll: CheckCheck,
+  cancel: CircleX,
+  refresh: RefreshCw,
+  store: Store,
+  food: UtensilsCrossed,
+  clock: Clock,
+  location: MapPin,
+  delivery: Truck,
+  mail: Mail,
+  phone: Phone,
+  edit: Pencil,
+  logout: LogOut,
+  error: CircleAlert,
+  offline: WifiOff,
+  wallet: Wallet,
+  directions: Navigation,
+  checkMark: Check,
+  power: Power,
+  arrowUp: ArrowUp,
+  arrowDown: ArrowDown,
+  shield: ShieldCheck,
+  eye: Eye,
+  eyeOff: EyeOff,
+  lock: Lock,
+  user: UserRound,
+  language: Languages,
+} as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof icons;
 
 /** Icons that point along the reading direction, so they flip in Arabic (right to left). */
-const DIRECTIONAL: ReadonlySet<IconName> = new Set<IconName>(['back', 'chevronRight']);
+const DIRECTIONAL: ReadonlySet<IconName> = new Set<IconName>(['back', 'chevronRight', 'logout']);
 
 /**
  * Whether directional icons are drawn mirrored. It follows the layout direction actually in effect: on the
- * web it changes with the language at once; on Android only after the restart that flips the layout
- * (see device.ts). iOS SF Symbols mirror their directional glyphs themselves in right-to-left layouts.
+ * web it changes with the language at once; on iOS and Android only after the restart that flips the layout
+ * (see device.ts). Lucide glyphs never mirror themselves, so every platform mirrors here.
  */
-export function mirrorsDirectionalIcons(locale: Parameters<typeof isRTL>[0], platform = Platform.OS, nativeRTL = I18nManager.isRTL): boolean {
-  if (platform === 'ios') return false;
+export function mirrorsDirectionalIcons(locale: Parameters<typeof isRTL>[0], platform: string = Platform.OS, nativeRTL = I18nManager.isRTL): boolean {
   return platform === 'web' ? isRTL(locale) : nativeRTL;
 }
 
@@ -59,8 +112,21 @@ type IconProps = {
 
 export function Icon({ name, size = IconSize.md, color = BrandColors.text }: IconProps) {
   const locale = useLocale();
+  const Glyph = icons[name];
   const mirrored = DIRECTIONAL.has(name) && mirrorsDirectionalIcons(locale);
-  return <SymbolView name={icons[name]} size={size} tintColor={color} style={mirrored ? MIRRORED : undefined} />;
+  return <Glyph size={size} color={color as string} strokeWidth={2} style={mirrored ? MIRRORED : undefined} />;
 }
 
 const MIRRORED = { transform: [{ scaleX: -1 }] };
+
+/** Tab-bar icon (Figma bottom nav): the active tab sits in a brand-subtle pill. */
+export function TabBarIcon({ name, color, focused }: { name: IconName; color: ColorValue; focused: boolean }) {
+  return (
+    <View style={[TAB_PILL, focused && TAB_PILL_ACTIVE]}>
+      <Icon name={name} color={color} size={22} />
+    </View>
+  );
+}
+
+const TAB_PILL = { width: 60, height: 32, borderRadius: 999, alignItems: 'center', justifyContent: 'center' } as const;
+const TAB_PILL_ACTIVE = { backgroundColor: BrandColors.primarySoft } as const;

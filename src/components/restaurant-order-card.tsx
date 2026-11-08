@@ -29,7 +29,7 @@ export function RestaurantOrderCard({ order, onAction, busy = false, error, onOp
     <Card testID={`order-${order.id}`}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <ThemedText type="defaultBold">Order {shortId(order.id)}</ThemedText>
+          <ThemedText type="defaultBold">{t('Order {id}', { id: shortId(order.id) })}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary" testID={`order-${order.id}-meta`}>
             {[order.customerFirstName, formatRelativeTime(order.createdAt)].filter(Boolean).join(' · ')}
           </ThemedText>

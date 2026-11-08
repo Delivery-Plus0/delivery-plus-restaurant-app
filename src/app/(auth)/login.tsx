@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AuthFormShell, emailPattern } from '@/components/auth-form-shell';
+import { RestaurantBrandPanel } from '@/components/restaurant-brand-panel';
 import { ThemedText } from '@/components/themed-text';
 import { AppButton } from '@/components/ui/app-button';
 import { FormTextInput } from '@/components/ui/form-text-input';
@@ -94,6 +95,7 @@ export default function LoginScreen() {
     <AuthFormShell
       title={t('Restaurant sign in')}
       subtitle={t('Open your kitchen order desk.')}
+      aside={<RestaurantBrandPanel />}
       footer={
         <ThemedText type="small" themeColor="textSecondary">
           {t('Restaurant owner accounts are provisioned by your administrator.')}
@@ -103,6 +105,7 @@ export default function LoginScreen() {
       <FormTextInput
         testID="login-email"
         label={t('Email')}
+        icon="mail"
         value={email}
         onChangeText={edit(setEmail, { newAccount: true })}
         onBlur={() => setTouched((current) => ({ ...current, email: true }))}
@@ -121,6 +124,7 @@ export default function LoginScreen() {
         testID="login-password"
         ref={passwordRef}
         label={t('Password')}
+        icon="lock"
         value={password}
         onChangeText={edit(setPassword)}
         onBlur={() => setTouched((current) => ({ ...current, password: true }))}

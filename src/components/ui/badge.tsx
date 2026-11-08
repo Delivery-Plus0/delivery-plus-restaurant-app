@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { BrandColors, Radius, Spacing } from '@/constants/theme';
+import { BrandColors, FontFamily, Radius, Spacing } from '@/constants/theme';
 
 export type BadgeTone = 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info';
 
 const toneColors: Record<BadgeTone, { background: string; text: string }> = {
-  neutral: { background: BrandColors.surfaceMuted, text: BrandColors.textSecondary },
+  neutral: { background: BrandColors.divider, text: BrandColors.textSecondary },
   brand: { background: BrandColors.primarySoft, text: BrandColors.primaryText },
   success: { background: BrandColors.successSoft, text: BrandColors.success },
   warning: { background: BrandColors.warningSoft, text: BrandColors.warning },
@@ -13,11 +13,13 @@ const toneColors: Record<BadgeTone, { background: string; text: string }> = {
   info: { background: BrandColors.infoSoft, text: BrandColors.info },
 };
 
-export function Badge({ label, tone = 'neutral', testID }: { label: string; tone?: BadgeTone; testID?: string }) {
+/** Figma "Badge" (Redesign 2026): a dot plus the label, so colour is never the only signal. */
+export function Badge({ label, tone = 'neutral', dot = true, testID }: { label: string; tone?: BadgeTone; dot?: boolean; testID?: string }) {
   const colors = toneColors[tone];
 
   return (
     <View style={[styles.badge, { backgroundColor: colors.background }]}>
+      {dot ? <View style={[styles.dot, { backgroundColor: colors.text }]} /> : null}
       {/* The id sits on the text node so UI tests can match id + label together. */}
       <Text style={[styles.label, { color: colors.text }]} numberOfLines={1} testID={testID} nativeID={testID}>
         {label}
@@ -29,13 +31,22 @@ export function Badge({ label, tone = 'neutral', testID }: { label: string; tone
 const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + Spacing.half,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.two + Spacing.half,
-    paddingVertical: Spacing.half,
+    paddingVertical: 3,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   label: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
+    fontWeight: '500',
+    fontFamily: FontFamily.medium,
   },
 });

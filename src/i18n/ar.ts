@@ -2,6 +2,27 @@ import type { ArabicPluralForms } from './core';
 
 /** Arabic for this app's own text (#151): English text → Arabic. The kit's strings are in kit-ar.ts. */
 export const appArabic: Readonly<Record<string, string>> = {
+  // Menu editor and order sheet titles (were not translated)
+  'Edit {name}': 'تعديل {name}',
+  'New menu item': 'صنف جديد',
+  'Save changes': 'حفظ التغييرات',
+  'Add to menu': 'إضافة إلى القائمة',
+  'Uploading…': 'جارٍ الرفع…',
+  'Removing…': 'جارٍ الإزالة…',
+  'Rename category': 'إعادة تسمية الفئة',
+  'New category': 'فئة جديدة',
+  Save: 'حفظ',
+  'Add an item to {category}': 'إضافة صنف إلى {category}',
+  Available: 'متاح',
+  'Sold out': 'نفدت الكمية',
+  'Order {id}': 'طلب {id}',
+  Order: 'طلب',
+  // Desktop sign-in brand panel (Redesign 2026, R-01)
+  'Your kitchen order desk': 'لوحة طلبات مطبخك',
+  'New paid orders arrive automatically': 'تصلك الطلبات المدفوعة الجديدة تلقائيًا',
+  'Move each order from kitchen to pickup': 'انقل كل طلب من المطبخ إلى الاستلام',
+  'Keep your menu and availability up to date': 'حافظ على تحديث القائمة وتوفّر الأصناف',
+  'Delivery Plus · Restaurant': 'ديليفري بلس · المطاعم',
   // Tabs
   Orders: 'الطلبات',
   Menu: 'القائمة',
@@ -48,7 +69,7 @@ export const appArabic: Readonly<Record<string, string>> = {
   Open: 'مفتوح',
   'Customers can order': 'يمكن للعملاء الطلب',
   Busy: 'مشغول',
-  'Shown as busy to customers': 'يظهر للعملاء كمشغول',
+  'No new orders for now: customers are asked to try again in a few minutes': 'لا طلبات جديدة مؤقتًا: يُطلب من العملاء المحاولة بعد بضع دقائق',
   Closed: 'مغلق',
   'No new orders': 'لا طلبات جديدة',
 

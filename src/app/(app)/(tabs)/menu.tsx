@@ -1,6 +1,8 @@
+import { Image } from 'expo-image';
 import { useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AvailabilitySwitch } from '@/components/availability-switch';
 import { CategorySheet, ItemSheet } from '@/components/menu-editor';
 import { RestaurantPicker } from '@/components/restaurant-picker';
 import { ThemedText } from '@/components/themed-text';
@@ -8,11 +10,13 @@ import { AppButton } from '@/components/ui/app-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Dialog } from '@/components/ui/dialog';
+import { Icon } from '@/components/ui/icon';
+import { IconButton } from '@/components/ui/icon-button';
 import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen, ScreenHeader } from '@/components/ui/screen';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { ErrorState, StateView } from '@/components/ui/state-view';
-import { BrandColors, Spacing } from '@/constants/theme';
+import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
 import { deleteCategory, reorderCategories, type MenuCategory, type MenuItem, type MenuResponse } from '@/services/menus';
 import type { OwnerRestaurantStatus, Restaurant } from '@/services/restaurants';
@@ -134,22 +138,22 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
         sections.map((section, index) => {
           const category = section.category;
           return (
-          <Card key={section.id} testID={`menu-section-${section.id}`}>
-            <View style={styles.row}>
+          <Card key={section.id} testID={`menu-section-${section.id}`} style={styles.section}>
+            <View style={[styles.row, styles.sectionHead]}>
               <ThemedText type="smallBold" accessibilityRole="header" style={[styles.flex, styles.sectionTitle]} testID={`menu-section-${section.id}-title`}>
                 {section.title}
               </ThemedText>
               {category ? (
                 <View style={styles.sectionActions}>
-                  <AppButton testID={`category-${section.id}-up`} title="↑" accessibilityHint={t('Moves this category up')} variant="ghost" size="sm" fullWidth={false} disabled={busy || index === 0} onPress={() => move(category, -1)} />
-                  <AppButton testID={`category-${section.id}-down`} title="↓" accessibilityHint={t('Moves this category down')} variant="ghost" size="sm" fullWidth={false} disabled={busy || index >= menu.categories.length - 1} onPress={() => move(category, 1)} />
-                  <AppButton testID={`category-${section.id}-rename`} title={t('Rename')} variant="ghost" size="sm" fullWidth={false} onPress={() => setEditing({ kind: 'category', category })} />
-                  <AppButton testID={`category-${section.id}-delete`} title={t('Delete')} variant="ghost" size="sm" fullWidth={false} disabled={busy} onPress={() => setDeleting(category)} />
+                  <IconButton testID={`category-${section.id}-up`} icon="arrowUp" variant="plain" accessibilityLabel={t('Moves this category up')} disabled={busy || index === 0} onPress={() => move(category, -1)} />
+                  <IconButton testID={`category-${section.id}-down`} icon="arrowDown" variant="plain" accessibilityLabel={t('Moves this category down')} disabled={busy || index >= menu.categories.length - 1} onPress={() => move(category, 1)} />
+                  <IconButton testID={`category-${section.id}-rename`} icon="edit" variant="plain" accessibilityLabel={t('Rename')} onPress={() => setEditing({ kind: 'category', category })} />
+                  <IconButton testID={`category-${section.id}-delete`} icon="trash" variant="plain" color={BrandColors.danger} accessibilityLabel={t('Delete')} disabled={busy} onPress={() => setDeleting(category)} />
                 </View>
               ) : null}
             </View>
             {section.items.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary" testID={`menu-section-${section.id}-empty`} nativeID={`menu-section-${section.id}-empty`}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.emptySection} testID={`menu-section-${section.id}-empty`} nativeID={`menu-section-${section.id}-empty`}>
                 {t('No items in this category yet.')}
               </ThemedText>
             ) : null}
@@ -163,7 +167,9 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
               />
             ))}
             {category ? (
-              <AppButton testID={`category-${section.id}-add-item`} title={`Add an item to ${section.title}`} variant="ghost" size="sm" onPress={() => setEditing({ kind: 'item', item: null, categoryId: section.id })} />
+              <View style={styles.sectionFoot}>
+                <AppButton testID={`category-${section.id}-add-item`} title={t('Add an item to {category}', { category: section.title })} icon="plus" variant="ghost" size="sm" fullWidth={false} onPress={() => setEditing({ kind: 'item', item: null, categoryId: section.id })} />
+              </View>
             ) : null}
           </Card>
           );
@@ -183,6 +189,7 @@ function MenuEditor({ restaurantId, menu }: { restaurantId: string; menu: MenuRe
         />
       ) : null}
       <Dialog
+        icon="trash"
         visible={deleting !== null}
         title={deleting ? t('Delete {name}?', { name: deleting.name }) : t('Delete this category?')}
         message={t('Only an empty category can be deleted. Move or archive its items first.')}
@@ -235,22 +242,30 @@ function StatusCard({ restaurant }: { restaurant: Restaurant }) {
         <Badge label={current.label} tone={current.tone} testID="restaurant-status" />
       </View>
       {editable ? (
-        <View style={styles.segments}>
+        // Figma R-11: a segmented control (Open / Busy / Closed).
+        <View style={styles.segments} accessibilityRole="radiogroup">
           {OWNER_STATUSES.map((option) => {
             const selected = option.status === restaurant.status;
             return (
-              <View key={option.status} style={styles.flex}>
-                <AppButton
-                  testID={`restaurant-status-${option.status}`}
-                  title={option.label}
-                  size="sm"
-                  variant={selected ? 'primary' : 'secondary'}
-                  loading={pending === option.status}
-                  disabled={pending !== null}
-                  accessibilityHint={selected ? t('Current status.') : t('Sets the restaurant to {status}.', { status: option.label })}
-                  onPress={() => void change(option.status)}
-                />
-              </View>
+              <Pressable
+                key={option.status}
+                testID={`restaurant-status-${option.status}`}
+                nativeID={`restaurant-status-${option.status}`}
+                accessibilityRole="radio"
+                accessibilityState={{ selected, checked: selected, disabled: pending !== null, busy: pending === option.status }}
+                accessibilityHint={selected ? t('Current status.') : t('Sets the restaurant to {status}.', { status: option.label })}
+                disabled={pending !== null}
+                onPress={() => void change(option.status)}
+                style={[styles.segment, selected && styles.segmentSelected]}
+              >
+                {pending === option.status ? (
+                  <ActivityIndicator size="small" color={BrandColors.primary} />
+                ) : (
+                  <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
+                    {option.label}
+                  </ThemedText>
+                )}
+              </Pressable>
             );
           })}
         </View>
@@ -281,28 +296,42 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
     }
   }
 
+  // Figma R-11: photo, name and price, availability as a label plus a switch, and an edit button.
   return (
     <View style={[styles.item, !first && styles.itemDivider]} testID={`item-${item.id}`} nativeID={`item-${item.id}`}>
       <View style={styles.row}>
+        <View style={[styles.thumb, !item.available && styles.dimmed]}>
+          {item.imageUrl ? (
+            <Image source={item.imageUrl} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" />
+          ) : (
+            <Icon name="food" size={IconSize.md} color={BrandColors.packageTan} />
+          )}
+        </View>
         <View style={styles.flex}>
-          <ThemedText type="default" numberOfLines={1} style={!item.available && styles.soldOutName}>
+          <ThemedText type="defaultBold" numberOfLines={1} style={!item.available && styles.soldOutName}>
             {item.name}
           </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {formatMoney(item.price)}
-          </ThemedText>
+          {item.description ? (
+            <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
+              {item.description}
+            </ThemedText>
+          ) : null}
+          {/* The label sits on the price line so the name keeps the full width on a phone. */}
+          <View style={styles.priceLine}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.tabular}>
+              {formatMoney(item.price)}
+            </ThemedText>
+            <Badge label={item.available ? t('Available') : t('Sold out')} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
+          </View>
         </View>
-        <Badge label={item.available ? 'Available' : 'Sold out'} tone={item.available ? 'success' : 'neutral'} testID={`item-${item.id}-availability`} />
-        <AppButton
+        <AvailabilitySwitch
           testID={`item-${item.id}-toggle`}
-          title={item.available ? t('Mark sold out') : t('Mark available')}
-          variant="ghost"
-          size="sm"
-          fullWidth={false}
-          loading={isSaving}
-          onPress={() => void toggle()}
+          value={item.available}
+          busy={isSaving}
+          accessibilityLabel={item.available ? t('Mark sold out') : t('Mark available')}
+          onToggle={() => void toggle()}
         />
-        <AppButton testID={`item-${item.id}-edit`} title={t('Edit')} variant="ghost" size="sm" fullWidth={false} onPress={onEdit} />
+        <IconButton testID={`item-${item.id}-edit`} icon="edit" accessibilityLabel={t('Edit')} onPress={onEdit} />
       </View>
       {error ? <InlineAlert message={error} testID={`item-${item.id}-error`} /> : null}
     </View>
@@ -310,6 +339,13 @@ function ItemRow({ restaurantId, item, first, onEdit }: { restaurantId: string; 
 }
 
 const styles = StyleSheet.create({
+  priceLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.half,
+  },
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
@@ -331,19 +367,70 @@ const styles = StyleSheet.create({
   },
   sectionActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.one,
+    gap: 0,
   },
   segments: {
     flexDirection: 'row',
-    gap: Spacing.two,
+    gap: Spacing.one,
+    padding: Spacing.one,
     marginTop: Spacing.three,
+    borderRadius: Radius.sm,
+    backgroundColor: BrandColors.divider,
+  },
+  segment: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: Radius.sm - Spacing.one,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentSelected: {
+    backgroundColor: BrandColors.surface,
   },
   sectionTitle: {
-    marginBottom: Spacing.one,
+    fontSize: 16,
+  },
+  emptySection: {
+    padding: Spacing.three,
+  },
+  section: {
+    padding: 0,
+    gap: 0,
+    overflow: 'hidden',
+  },
+  sectionHead: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    backgroundColor: BrandColors.surfaceMuted,
+  },
+  sectionFoot: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: BrandColors.divider,
   },
   item: {
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.two + Spacing.half,
+    paddingHorizontal: Spacing.three,
+  },
+  thumb: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.sm,
+    backgroundColor: BrandColors.tanSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
+  },
+  dimmed: {
+    opacity: 0.5,
+  },
+  tabular: {
+    fontVariant: ['tabular-nums'],
   },
   itemDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,

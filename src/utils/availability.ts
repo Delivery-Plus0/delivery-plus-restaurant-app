@@ -5,7 +5,7 @@ import { t } from '@/i18n/core';
 /** What the owner can choose, in the order shown. SUSPENDED is set and lifted by an admin only. */
 export const OWNER_STATUSES: { status: OwnerRestaurantStatus; label: string; hint: string }[] = [
   { status: 'OPEN', get label() { return t('Open'); }, get hint() { return t('Customers can order'); } },
-  { status: 'BUSY', get label() { return t('Busy'); }, get hint() { return t('Shown as busy to customers'); } },
+  { status: 'BUSY', get label() { return t('Busy'); }, get hint() { return t('No new orders for now: customers are asked to try again in a few minutes'); } },
   { status: 'CLOSED', get label() { return t('Closed'); }, get hint() { return t('No new orders'); } },
 ];
 

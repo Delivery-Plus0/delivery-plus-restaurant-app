@@ -27,7 +27,7 @@ type OrderDetailSheetProps = {
 /** Everything the kitchen needs about one order (#154), and rejecting it before preparing. */
 export function OrderDetailSheet({ restaurantId, order, onClose, onRejected }: OrderDetailSheetProps) {
   return (
-    <Sheet visible={order !== null} title={order ? `Order ${shortId(order.id)}` : 'Order'} onClose={onClose} testID="order-sheet">
+    <Sheet visible={order !== null} title={order ? t('Order {id}', { id: shortId(order.id) }) : t('Order')} onClose={onClose} testID="order-sheet">
       {/* Keyed by order so switching orders starts the reject form fresh. */}
       {order ? <OrderDetail key={order.id} restaurantId={restaurantId} order={order} onRejected={onRejected} /> : null}
     </Sheet>

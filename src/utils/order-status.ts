@@ -26,7 +26,7 @@ export const RESTAURANT_STATUS_META: Record<RestaurantStatus, { label: string; t
   SUSPENDED: { get label() { return t('Suspended'); }, tone: 'danger' },
 };
 
-/** The owner's chosen restaurant if it still exists, else the first one taking orders (OPEN/BUSY), else the first. */
+/** The owner's chosen restaurant if it still exists, else the first active one (OPEN or BUSY), else the first. */
 export function selectRestaurant(restaurants: Restaurant[] | undefined, selectedId: string | null): Restaurant | null {
   if (!restaurants?.length) return null;
   return (
