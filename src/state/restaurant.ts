@@ -120,6 +120,20 @@ export async function reloadMenu(restaurantId: string): Promise<void> {
   await fetchResource(menuKey(restaurantId), () => fetchMenu(restaurantId));
 }
 
+/** #28: puts the server's answer for one restaurant into the owner's list (adds it when it is new). */
+export function storeMyRestaurant(updated: Restaurant): void {
+  setResourceData<Restaurant[]>(RESTAURANTS_KEY, (list) => {
+    const current = list ?? [];
+    return current.some((r) => r.id === updated.id) ? current.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)) : [updated, ...current];
+  });
+  selectRestaurantId(updated.id);
+}
+
+/** #28: refetches the owner's restaurants, e.g. after a submit, so every screen shows the new state. */
+export async function reloadMyRestaurants(): Promise<void> {
+  await fetchResource(RESTAURANTS_KEY, fetchMyRestaurants);
+}
+
 /** Opens, pauses or closes the restaurant and updates the owner's restaurant list with the result. */
 export async function setRestaurantStatus(restaurantId: string, status: OwnerRestaurantStatus): Promise<void> {
   const updated = await updateRestaurantStatus(restaurantId, status);

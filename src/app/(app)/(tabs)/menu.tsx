@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ApplicationStatusCard } from '@/components/application-status-card';
 import { AvailabilitySwitch } from '@/components/availability-switch';
 import { CategorySheet, ItemSheet } from '@/components/menu-editor';
 import { RestaurantPicker } from '@/components/restaurant-picker';
@@ -27,6 +28,7 @@ import { editorSections, moveCategory } from '@/utils/menu-editor';
 import { formatMoney } from '@/utils/format';
 import { RESTAURANT_STATUS_META } from '@/utils/order-status';
 import { t } from '@/i18n';
+import { describeApplicationError, isApproved } from '@/utils/restaurant-application';
 
 /** Keeps the menu list readable on wide screens. */
 const MAX_MENU_WIDTH = 760;
@@ -53,16 +55,16 @@ export default function MenuScreen() {
         ) : restaurants.error && restaurants.data === undefined ? (
           <ErrorState error={restaurants.error} onRetry={() => void restaurants.refresh()} />
         ) : !restaurant ? (
-          <StateView
-            icon="store"
-            title={t('No restaurant linked to this account')}
-            message={t('Ask an administrator to connect your owner account to a restaurant.')}
-            testID="restaurants-empty"
-          />
+          <ApplicationStatusCard restaurant={null} />
         ) : (
           <>
             <RestaurantPicker restaurants={restaurants.data ?? []} selectedId={restaurant.id} onSelect={selectRestaurantId} />
-            <StatusCard key={`${restaurant.id}:${restaurant.status}`} restaurant={restaurant} />
+            {/* #28: opening needs an approved application; the menu can be edited before that. */}
+            {isApproved(restaurant) ? (
+              <StatusCard key={`${restaurant.id}:${restaurant.status}`} restaurant={restaurant} />
+            ) : (
+              <ApplicationStatusCard restaurant={restaurant} onMenuScreen />
+            )}
 
             {menu.isLoading ? (
               <SkeletonList count={4} itemHeight={64} />
@@ -223,7 +225,7 @@ function StatusCard({ restaurant }: { restaurant: Restaurant }) {
     try {
       await setRestaurantStatus(restaurant.id, status);
     } catch (caught) {
-      setError(errorMessage(caught, t('Unable to change the status right now.')));
+      setError(describeApplicationError(caught, t('Unable to change the status right now.')));
     } finally {
       inFlight.current = false;
       setPending(null);

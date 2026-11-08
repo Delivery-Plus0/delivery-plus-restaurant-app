@@ -26,6 +26,7 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BrandColors.background } }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" />
     </Stack>
   );
 }

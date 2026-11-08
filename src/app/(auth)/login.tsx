@@ -97,9 +97,16 @@ export default function LoginScreen() {
       subtitle={t('Open your kitchen order desk.')}
       aside={<RestaurantBrandPanel />}
       footer={
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('Restaurant owner accounts are provisioned by your administrator.')}
-        </ThemedText>
+        <>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('New to Delivery Plus?')}
+          </ThemedText>
+          <Link href="/register" replace asChild>
+            <Pressable accessibilityRole="link" hitSlop={8} testID="login-register" nativeID="login-register">
+              <ThemedText type="linkPrimary">{t('Create an owner account')}</ThemedText>
+            </Pressable>
+          </Link>
+        </>
       }
     >
       <FormTextInput

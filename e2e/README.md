@@ -48,16 +48,16 @@ npm run e2e:verification -- --headless
 
 | Suite | Flows | Runs in CI |
 | --- | --- | --- |
-| `smoke` | owner signs in → QA Kitchen (open) is shown → a new paid order is in "New orders" with its total and the *Start preparing* action · Menu tab: QA Fries → *Sold out* (checked on the public menu) → back; restaurant → *Busy* (checked on the public restaurant) → *Open* | every PR |
+| `smoke` | owner signs in → QA Kitchen (open) is shown → a new paid order is in "New orders" with its total and the *Start preparing* action · Menu tab: QA Fries → *Sold out* (checked on the public menu) → back; restaurant → *Busy* (checked on the public restaurant) → *Open* · **onboarding (#28):** a new owner signs up → wizard (details, location, photos skipped) → the review step lists the missing menu → the real menu editor (the Open control isn't offered yet) → a category and an item → submit → "under review" → approved through the API → *Open* (checked on the public restaurant) | every PR |
 | `session` | **60-second access tokens:** signed in for six minutes, reloading the board after every token expiry (five refreshes) · sign out → sign-in screen, and a reload stays signed out | every PR and nightly, after the main suite, with auth-service restarted at `JWT_EXPIRES_IN=60s` |
-| `verification` | **email verification on:** an unverified owner signs in → the code screen → Resend inside the minute is refused (429, countdown restarts) → after it a new code → verify → sign in → the board (no restaurant yet) | every PR and nightly, after the session suite, with auth-service restarted at `EMAIL_VERIFICATION_REQUIRED=true` |
+| `verification` | **email verification on:** an unverified owner signs in → the code screen → Resend inside the minute is refused (429, countdown restarts) → after it a new code → verify → sign in → "Set up your restaurant" (no restaurant yet) | every PR and nightly, after the session suite, with auth-service restarted at `EMAIL_VERIFICATION_REQUIRED=true` |
 | `business` | no driver free → a new paid order → *Start preparing* → "In kitchen" → *Ready for pickup* → "Ready for pickup" (no further action) → automatic dispatch created the delivery | nightly / manual |
 
 ## Test data (from `npm run seed:e2e`)
 
 | Account | Role | Use |
 | --- | --- | --- |
-| `qa.restaurant@delivery-plus.test` | RESTAURANT_OWNER | signs in to the app; owns QA Kitchen (OPEN) and QA Night Cafe (CLOSED) |
+| `qa.restaurant@delivery-plus.test` | RESTAURANT_OWNER | signs in to the app; owns QA Kitchen (OPEN). QA Night Cafe (CLOSED) has its own owner, `qa.restaurant2@…`: one restaurant per owner (backend #208) |
 | `qa.customer@delivery-plus.test` | CUSTOMER | places the orders (stand-in) |
 | `qa.driver@delivery-plus.test` | DRIVER | taken offline by the business-flow fixture, restored afterwards |
 
@@ -76,6 +76,9 @@ Seeded orders (S1–S4) are never modified: the customer app's flows rely on the
   delivery-service created its delivery. Nothing creates or assigns a delivery.
 
 - `verify/fries-sold-out`, `verify/kitchen-busy` (read-only, public reads): the owner's availability changes reached the server.
+- `onboarding/new-owner`, `onboarding/find` (read-only): a fresh owner address and restaurant name, then the new restaurant's first category for the editor.
+- `onboarding/approve`: act as **staff** with `onboarding.review` (the stack's super admin) and approve the exact submission, after checking the owner can't approve it. The admin console comes with Production 3.
+- `onboarding/assert-open` (verification, public reads): the approved restaurant is OPEN and listed. `onboarding/close` closes it afterwards, so it never takes QA Kitchen's orders.
 
 After the suite the runner puts QA Kitchen back to OPEN with the seed's availability (QA Soup sold out, all else available), and the QA driver back as the seed left it (online, free); a delivery that
 was waiting for them is assigned on the next sweep and finished. Between flows it clears
@@ -90,3 +93,7 @@ Main ids: `restaurant-heading`, `restaurant-status`, `restaurant-select-<restaur
 `lane-<STATUS>`, `order-<id>`, `order-<id>-status`, `order-<id>-total`,
 `order-<id>-start-preparing`, `order-<id>-ready-for-pickup`, `orders-refresh`, `sign-out`, `tab-orders`, `tab-menu`,
 `restaurant-availability`, `restaurant-status-<OPEN|BUSY|CLOSED>`, `item-<id>-availability`, `item-<id>-toggle`.
+Onboarding (#28): `login-register`, `register-<full-name|email|phone|password|submit>`, `application-status`,
+`application-status-badge`, `onboarding-start`, `onboarding-continue`, `onboarding-step-<details|location|photos|menu|review>`,
+`onboarding-tab-<step>`, `onboarding-<name|legal-name|registration|tax-card|phone|cuisine|description|address|latitude|longitude>`,
+`onboarding-next`, `onboarding-back`, `onboarding-open-menu`, `onboarding-missing-<requirement>`, `onboarding-ready`, `onboarding-submit`.

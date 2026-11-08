@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { ApplicationStatusCard } from '@/components/application-status-card';
 import { SIDEBAR_MIN_WIDTH } from '@/components/dashboard-sidebar';
 import { OrderDetailSheet } from '@/components/order-detail-sheet';
 import { RestaurantOrderCard } from '@/components/restaurant-order-card';
@@ -15,7 +16,7 @@ import { InlineAlert } from '@/components/ui/inline-alert';
 import { Screen } from '@/components/ui/screen';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { Toast } from '@/components/ui/toast';
-import { ErrorState, StateView } from '@/components/ui/state-view';
+import { ErrorState } from '@/components/ui/state-view';
 import { BrandColors, IconSize, Radius, Spacing } from '@/constants/theme';
 import { ApiError } from '@/services/api';
 import type { KitchenStatus, RestaurantOrder } from '@/services/restaurant-orders';
@@ -27,6 +28,7 @@ import { formatMoney, shortId } from '@/utils/format';
 import { groupOrdersByLane, KITCHEN_LANES, ORDER_STATUS_META, RESTAURANT_STATUS_META } from '@/utils/order-status';
 import { LOCALE_NAMES, setLocale, t, useLocale } from '@/i18n';
 import { todayOrdersLabel } from '@/utils/today-summary';
+import { isApproved } from '@/utils/restaurant-application';
 
 /** Three lanes side by side from here; two below it; one on phones. */
 const WIDE = 1024;
@@ -38,8 +40,10 @@ export default function HomeScreen() {
   const { session } = useAuthSession();
   const { width } = useWindowDimensions();
   const { restaurants, restaurant } = useSelectedRestaurant();
-  const orders = useRestaurantOrders(restaurant?.id ?? null);
-  const today = useTodaySummary(restaurant?.id ?? null);
+  // #28: the board and its polling start once the restaurant is approved; until then it has no orders.
+  const live = restaurant && isApproved(restaurant) ? restaurant : null;
+  const orders = useRestaurantOrders(live?.id ?? null);
+  const today = useTodaySummary(live?.id ?? null);
   const [showOther, setShowOther] = useState(false);
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -49,7 +53,7 @@ export default function HomeScreen() {
   const sidebar = width >= SIDEBAR_MIN_WIDTH;
 
   async function refreshAll() {
-    await Promise.all([restaurants.refresh(), restaurant ? orders.refresh() : Promise.resolve(), restaurant ? today.refresh() : Promise.resolve()]);
+    await Promise.all([restaurants.refresh(), live ? orders.refresh() : Promise.resolve(), live ? today.refresh() : Promise.resolve()]);
   }
 
   // Figma R-03: three lanes side by side on wide screens. R-20/R-22: one lane at a time on phones and tablets,
@@ -86,13 +90,9 @@ export default function HomeScreen() {
           <SkeletonList count={2} itemHeight={72} />
         ) : restaurants.error && restaurants.data === undefined ? (
           <ErrorState error={restaurants.error} onRetry={() => void restaurants.refresh()} />
-        ) : !restaurant ? (
-          <StateView
-            icon="store"
-            title={t('No restaurant linked to this account')}
-            message={t('Ask an administrator to connect your owner account to a restaurant.')}
-            testID="restaurants-empty"
-          />
+        ) : !restaurant || !live ? (
+          // #28: no restaurant yet, or one whose application isn't approved: where it stands, and what next.
+          <ApplicationStatusCard restaurant={restaurant} />
         ) : (
           <>
             {sidebar ? null : <RestaurantPicker restaurants={restaurants.data ?? []} selectedId={restaurant.id} onSelect={selectRestaurantId} />}
