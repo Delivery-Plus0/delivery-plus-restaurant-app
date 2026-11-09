@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError, apiGet, apiPost, refreshSession, signOut } from './api';
+import { ApiError, apiGet, apiPost, apiPut, refreshSession, signOut } from './api';
 import { clearSession, getSessionSnapshot, setSession } from './session';
 
 function createAccessToken(version = 1): string {
@@ -53,6 +53,20 @@ describe('authenticated gateway requests', () => {
 
     const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('http://localhost:3000/api/orders');
+    expect(new Headers(request.headers).get('Authorization')).toBe(`Bearer ${createAccessToken()}`);
+  });
+
+  it('sends a PUT with a JSON body and the session (apiPut, e.g. the driver application)', async () => {
+    await setSession(createAccessToken());
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{"status":"DRAFT"}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(apiPut('/api/drivers/me/application', { nationalIdNumber: '29001011234567' }, true)).resolves.toEqual({ status: 'DRAFT' });
+
+    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:3000/api/drivers/me/application');
+    expect(request.method).toBe('PUT');
+    expect(bodyOf(fetchMock.mock.calls[0])).toEqual({ nationalIdNumber: '29001011234567' });
     expect(new Headers(request.headers).get('Authorization')).toBe(`Bearer ${createAccessToken()}`);
   });
 

@@ -39,7 +39,14 @@ const SCREEN_SIZE = process.env.E2E_SCREEN_SIZE ?? '1280x1800';
 const ARTIFACTS = join(E2E_DIR, '.artifacts', suite);
 
 const SUITES = {
-  smoke: ['smoke/01-restaurant-orders.yaml', 'smoke/02-availability.yaml', 'smoke/03-arabic.yaml', 'smoke/04-change-password.yaml', 'smoke/05-forgot-password.yaml'],
+  smoke: [
+    'smoke/01-restaurant-orders.yaml',
+    'smoke/02-availability.yaml',
+    'smoke/03-arabic.yaml',
+    'smoke/04-change-password.yaml',
+    'smoke/05-forgot-password.yaml',
+    'smoke/06-restaurant-onboarding.yaml',
+  ],
   business: ['business/01-kitchen-lifecycle.yaml', 'business/02-menu-editor.yaml', 'business/03-reject-order.yaml'],
   // #34: needs the stack's access tokens at 60 s (JWT_EXPIRES_IN=60s), so it is not part of `all`.
   session: ['session/stay-signed-in.yaml', 'session/sign-out.yaml'],
@@ -108,6 +115,12 @@ async function requireShortAccessTokens() {
   await api('POST', '/api/auth/logout', null, { refreshToken: auth.refreshToken }).catch(() => undefined);
   console.log(`Session suite: access tokens last ${seconds} s.`);
 }
+
+/** The E2E stack's super admin (TEST_ADMIN_* in the backend's test compose overlay, delivery-plus#202). */
+const ADMIN = {
+  email: process.env.TEST_ADMIN_EMAIL || 'qa.admin@delivery-plus.test',
+  password: process.env.TEST_ADMIN_PASSWORD || 'Qa-Only-Admin-Passw0rd!',
+};
 
 async function login(email) {
   resetRateLimits();
@@ -291,6 +304,50 @@ const actions = {
   'verification/read-email-code': async () => {
     state.code = readEmailCode(state.newEmail);
     state.wrongCode = state.code === '000000' ? '111111' : '000000';
+  },
+  // Onboarding (#28): a fresh owner address and a restaurant name no earlier run used.
+  'onboarding/new-owner': async () => {
+    const stamp = Date.now();
+    state.ownerEmail = `e2e.owner.${stamp}@example.com`;
+    state.restaurantName = `E2E Onboarding ${stamp}`;
+  },
+  // Read-only: the new owner's restaurant and its first category, so the flow can address the editor.
+  'onboarding/find': async () => {
+    const owner = await login(state.ownerEmail);
+    const [restaurant] = await api('GET', '/api/restaurants/me', owner);
+    if (!restaurant) throw new Error(`${state.ownerEmail} has no restaurant`);
+    state.restaurantId = restaurant.id;
+    const menu = await api('GET', `/api/menus/restaurants/${restaurant.id}/menu`);
+    state.categoryId = menu.categories[0]?.id ?? null;
+  },
+  // ADMIN stand-in (the admin console comes with Production 3): staff with onboarding.review approve the
+  // exact submission the owner sent, and the owner can't approve it themself.
+  'onboarding/approve': async () => {
+    const owner = await login(state.ownerEmail);
+    const [restaurant] = await api('GET', '/api/restaurants/me', owner);
+    if (restaurant?.approvalStatus !== 'SUBMITTED') throw new Error(`Expected a submitted application, got ${restaurant?.approvalStatus}`);
+    const ownerTry = await api('POST', `/api/restaurants/${restaurant.id}/review`, owner, { decision: 'APPROVED', submittedAt: restaurant.submittedAt }).then(() => 'approved', (error) => error.message);
+    if (!/→ 403/.test(ownerTry)) throw new Error(`The owner could review their own application: ${ownerTry}`);
+    const admin = (await api('POST', '/api/auth/login', null, { email: ADMIN.email, password: ADMIN.password })).accessToken;
+    await api('POST', `/api/restaurants/${restaurant.id}/review`, admin, { decision: 'APPROVED', submittedAt: restaurant.submittedAt });
+  },
+  // Verification (as a customer would see it): the approved restaurant is public and open.
+  'onboarding/assert-open': async () => {
+    // The owner's tap may still be on its way: wait briefly for the server to agree.
+    const deadline = Date.now() + 15_000;
+    let restaurant = await api('GET', `/api/restaurants/${state.restaurantId}`);
+    while (restaurant.status !== 'OPEN' && Date.now() < deadline) {
+      await sleep(500);
+      restaurant = await api('GET', `/api/restaurants/${state.restaurantId}`);
+    }
+    if (restaurant.status !== 'OPEN' || restaurant.approvalStatus !== 'APPROVED') throw new Error(`The new restaurant is ${restaurant.status}/${restaurant.approvalStatus}, expected OPEN/APPROVED`);
+    const { items } = await api('GET', `/api/restaurants?search=${encodeURIComponent(state.restaurantName)}`);
+    if (items.length !== 1) throw new Error(`Customers see ${items.length} restaurants named ${state.restaurantName}, expected 1`);
+  },
+  // Cleanup: close the flow's restaurant so it can't take orders meant for QA Kitchen.
+  'onboarding/close': async () => {
+    const owner = await login(state.ownerEmail);
+    await api('PATCH', `/api/restaurants/${state.restaurantId}/status`, owner, { status: 'CLOSED' });
   },
   // Fixture (#148): archive what an earlier, interrupted editor run left behind, then drop its category.
   'menu/cleanup': async () => {

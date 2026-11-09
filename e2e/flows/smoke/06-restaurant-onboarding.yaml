@@ -1,0 +1,202 @@
+url: ${APP_URL}
+name: Onboarding - a new owner signs up, sets up the restaurant and its menu, submits, and opens once approved
+tags:
+  - smoke
+---
+# A fresh owner address and restaurant name, never used by an earlier run.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: onboarding/new-owner
+
+# Sign up from the sign-in screen (#28); a new owner lands in the wizard.
+- openLink: ${APP_URL}/login
+- extendedWaitUntil:
+    visible:
+      id: login-register
+    timeout: 20000
+- tapOn:
+    id: login-register
+- extendedWaitUntil:
+    visible:
+      id: register-full-name
+    timeout: 10000
+- tapOn:
+    id: register-full-name
+- inputText: E2E New Owner
+- tapOn:
+    id: register-email
+- inputText: ${output.control.ownerEmail}
+- tapOn:
+    id: register-password
+- inputText: ${PASSWORD}
+- tapOn:
+    id: register-submit
+
+# Step 1: business details. Only the legal name is required among the legal details.
+- extendedWaitUntil:
+    visible:
+      id: onboarding-step-details
+    timeout: 20000
+- tapOn:
+    id: onboarding-name
+- inputText: ${output.control.restaurantName}
+- tapOn:
+    id: onboarding-legal-name
+- inputText: E2E Onboarding LLC
+- tapOn:
+    id: onboarding-phone
+- inputText: '01011112222'
+- tapOn:
+    id: onboarding-cuisine
+- inputText: Grill
+- tapOn:
+    id: onboarding-next
+
+# Step 2: location. The coordinates are typed (Maestro can't tap a map tile reliably); far from the
+# seeded restaurants, so customer lists filtered by location never show it.
+- extendedWaitUntil:
+    visible:
+      id: onboarding-step-location
+    timeout: 10000
+- tapOn:
+    id: onboarding-address
+- inputText: 1 Corniche Street, Aswan
+- tapOn:
+    id: onboarding-latitude
+- inputText: '24.0889'
+- tapOn:
+    id: onboarding-longitude
+- inputText: '32.8998'
+- tapOn:
+    id: onboarding-next
+
+# Step 3: the restaurant now exists as a draft; photos are optional.
+- extendedWaitUntil:
+    visible:
+      id: onboarding-step-photos
+    timeout: 20000
+- tapOn:
+    id: onboarding-next
+
+# Step 4: the menu is still empty; the review step says what is missing and won't submit.
+- extendedWaitUntil:
+    visible:
+      id: onboarding-step-menu
+    timeout: 10000
+- assertVisible: 'Categories: 0'
+- tapOn:
+    id: onboarding-tab-review
+- extendedWaitUntil:
+    visible:
+      id: onboarding-missing-menuCategory
+    timeout: 10000
+- assertVisible:
+    id: onboarding-missing-availableMenuItem
+- assertNotVisible:
+    id: onboarding-missing-legalName
+
+# The real menu editor, reachable before approval: a category and an item.
+- tapOn:
+    id: onboarding-missing-menuCategory
+- extendedWaitUntil:
+    visible:
+      id: onboarding-open-menu
+    timeout: 10000
+- tapOn:
+    id: onboarding-open-menu
+- extendedWaitUntil:
+    visible:
+      id: menu-add-category
+    timeout: 20000
+# Not approved yet: the menu screen shows the application, not the Open/Busy/Closed control.
+- assertVisible:
+    id: application-status
+- assertNotVisible:
+    id: restaurant-status-OPEN
+- tapOn:
+    id: menu-add-category
+- extendedWaitUntil:
+    visible:
+      id: category-editor
+    timeout: 10000
+- tapOn:
+    id: category-editor-name
+- inputText: Mains
+- tapOn:
+    id: category-editor-save
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+    timeout: 15000
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: onboarding/find
+- tapOn:
+    id: category-${output.control.categoryId}-add-item
+- extendedWaitUntil:
+    visible:
+      id: item-editor
+    timeout: 10000
+- tapOn:
+    id: item-editor-name
+- inputText: E2E Grilled Fish
+- tapOn:
+    id: item-editor-price
+- inputText: '120'
+- tapOn:
+    id: item-editor-save
+- extendedWaitUntil:
+    visible:
+      id: menu-feedback
+    timeout: 15000
+
+# Back in the wizard (the application card's Continue): nothing is missing, submit.
+- tapOn:
+    id: onboarding-continue
+- extendedWaitUntil:
+    visible:
+      id: onboarding-step-menu
+    timeout: 20000
+- assertVisible: 'Categories: 1'
+- assertVisible: 'Available items: 1'
+- tapOn:
+    id: onboarding-next
+- extendedWaitUntil:
+    visible:
+      id: onboarding-ready
+    timeout: 10000
+- tapOn:
+    id: onboarding-submit
+
+# Under review: the dashboard says so, and there is still no way to open.
+- extendedWaitUntil:
+    visible:
+      id: application-status
+    timeout: 20000
+- assertVisible: 'Your application is under review'
+- assertVisible: 'Under review'
+
+# Staff approve (through the API: the admin console comes later); the owner can now open.
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: onboarding/approve
+- openLink: ${APP_URL}/menu
+- extendedWaitUntil:
+    visible:
+      id: restaurant-status-OPEN
+    timeout: 20000
+- assertNotVisible:
+    id: application-status
+- tapOn:
+    id: restaurant-status-OPEN
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: onboarding/assert-open
+- runScript:
+    file: ../../scripts/control.js
+    env:
+      ACTION: onboarding/close

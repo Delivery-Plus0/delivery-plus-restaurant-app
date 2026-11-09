@@ -233,6 +233,14 @@ export async function apiPatch<T>(path: string, body: unknown, authRequired = fa
   }, authRequired);
 }
 
+/** Replaces a resource (e.g. the driver application, backend #207). */
+export async function apiPut<T>(path: string, body: unknown, authRequired = false): Promise<T> {
+  return request<T>(path, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  }, authRequired);
+}
+
 export async function apiDelete<T = void>(path: string, authRequired = false): Promise<T> {
   return request<T>(path, { method: 'DELETE' }, authRequired);
 }

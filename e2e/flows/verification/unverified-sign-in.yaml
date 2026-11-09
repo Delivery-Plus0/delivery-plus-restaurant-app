@@ -79,8 +79,8 @@ tags:
 - inputText: ${PASSWORD}
 - tapOn:
     id: login-submit
-# A new owner with no restaurant yet lands on the empty board.
+# A new owner with no restaurant yet is offered the restaurant setup (#28).
 - extendedWaitUntil:
     visible:
-      id: restaurants-empty
+      id: onboarding-start
     timeout: 20000

@@ -14,6 +14,7 @@ Replace the restaurant API stand-in with an owner-facing browser client. The MVP
 - [x] Maestro smoke + business suites pass against the real isolated backend (runtime-created orders; web :8085, control :8092).
 - [x] Menu tab: restaurant status (Open/Busy/Closed; locked while SUSPENDED) and item availability (sold out / available), with unit tests and a Maestro smoke flow.
 - [x] The customer business E2E uses this app instead of the restaurant API stand-in (customer-app #20).
+- [x] Owner sign-up and restaurant onboarding (#28, backend #208): a new owner signs up, goes through a five-step wizard (business details, location with a Leaflet/OpenStreetMap map, logo and cover, menu, review and submit), and sees the application's state (draft, under review, changes needed) in place of the board. The Open/Busy/Closed control appears only once staff approve it. Maestro smoke flow `06-restaurant-onboarding`.
 
 ## Backend contract
 
