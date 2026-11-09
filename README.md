@@ -23,13 +23,25 @@
 
 Built with **Expo 57 / React Native 0.86 / Expo Router / TypeScript**, web-first (desktop and narrow browser widths), on the same foundation and design system as the [customer app](https://github.com/Delivery-Plus0/delivery-plus-customer-app) and the [driver app](https://github.com/Delivery-Plus0/delivery-plus-driver-app): API client, session handling, `useResource` cache and polling, UI kit and theme, lint and test setup. It talks only to the Delivery Plus API gateway; the backend lives in [Delivery-Plus0/delivery-plus](https://github.com/Delivery-Plus0/delivery-plus) (issue #100).
 
-## App gallery
+## Screens
 
-<p align="center">
-  <a href="./identity/mobile-screens.png"><img src="./identity/mobile-screens.png" alt="Four rounded phone mockups showing restaurant kitchen board, menu management, order details and menu item" width="850"></a>
-</p>
+<!-- Generated from the app's web build (screens in docs/screens); regenerate rather than edit by hand. -->
+<table>
+<tr>
+<td align="center"><b>English</b></td>
+<td align="center"><b>العربية</b></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/screens/tour-en.webp" width="640" alt="Every screen of the app in turn, in English"></td>
+<td align="center"><img src="docs/screens/tour-ar.webp" width="640" alt="كل شاشات التطبيق بالترتيب، بالعربية"></td>
+</tr>
+<tr>
+<td align="center"><a href="docs/screens/en/01-sign-in.md">▶ Walk through, screen by screen</a></td>
+<td align="center"><a href="docs/screens/ar/01-sign-in.md">▶ جولة شاشة بشاشة</a></td>
+</tr>
+</table>
 
-Four real screens from the running app, presented in rounded phone frames. Captured at phone width from the web build with seeded QA data.
+10 screens in a tablet frame, in English and Arabic (right to left), from the web build with sample data. Each one has its own page with **Previous / Next**; all of them are in the [gallery](docs/screens/README.md). Photos: [Unsplash](https://unsplash.com/license).
 
 ## Features (MVP)
 
