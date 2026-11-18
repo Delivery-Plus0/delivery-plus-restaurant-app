@@ -17,8 +17,16 @@ export type { LocationMapProps } from './location-map';
  */
 export const MAP_AVAILABLE = true;
 
-/** Where the map opens before a pin exists: central Cairo. */
-const DEFAULT_CENTER: L.LatLngTuple = [30.0444, 31.2357];
+/** `"lat,lng"` from the build (EXPO_PUBLIC_FIXED_LOCATION), or null when unset, malformed or out of range. */
+function parseFixedLocation(value: string | undefined): L.LatLngTuple | null {
+  const parts = value?.split(',').map((part) => Number(part.trim()));
+  if (parts?.length !== 2 || !parts.every(Number.isFinite)) return null;
+  const [latitude, longitude] = parts;
+  return Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? [latitude, longitude] : null;
+}
+
+/** Where the map opens before a pin exists: the build's fixed location when one is set, else central Cairo. */
+const DEFAULT_CENTER: L.LatLngTuple = parseFixedLocation(process.env.EXPO_PUBLIC_FIXED_LOCATION) ?? [30.0444, 31.2357];
 /** About 10 cm: more is noise from a tap. */
 const round = (value: number) => Math.round(value * 1e6) / 1e6;
 
