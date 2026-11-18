@@ -1,4 +1,5 @@
 import type { MenuCategory, MenuItem } from '@/services/menus';
+import { CURRENCY } from '@/utils/format';
 import { t } from '@/i18n/core';
 
 /** Same limits as menu-service (#148); the backend enforces them, these only give early feedback. */
@@ -23,9 +24,9 @@ export function validateItemDraft(draft: ItemDraftInput): ItemDraftErrors {
   else if (name.length > NAME_MAX) errors.name = t('Keep the name under {max} characters', { max: NAME_MAX });
   if (draft.description.trim().length > DESCRIPTION_MAX) errors.description = t('Keep the description under {max} characters', { max: DESCRIPTION_MAX });
   const price = parsePrice(draft.price);
-  if (price === null) errors.price = t('Enter a price in EGP, e.g. 45 or 45.50');
+  if (price === null) errors.price = t('Enter a price in {currency}, e.g. 45 or 45.50', { currency: CURRENCY });
   else if (price <= 0) errors.price = t('The price must be more than 0');
-  else if (price > PRICE_MAX) errors.price = t('The price can be at most EGP {max}', { max: PRICE_MAX.toLocaleString('en-US') });
+  else if (price > PRICE_MAX) errors.price = t('The price can be at most {currency} {max}', { currency: CURRENCY, max: PRICE_MAX.toLocaleString('en-US') });
   return errors;
 }
 
