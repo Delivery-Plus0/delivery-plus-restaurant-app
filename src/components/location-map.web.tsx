@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BrandColors, Radius } from '@/constants/theme';
 import { t } from '@/i18n';
+import { parseFixedLocation } from '@/utils/fixed-location';
 
 import type { LocationMapProps } from './location-map';
 
@@ -17,8 +18,8 @@ export type { LocationMapProps } from './location-map';
  */
 export const MAP_AVAILABLE = true;
 
-/** Where the map opens before a pin exists: central Cairo. */
-const DEFAULT_CENTER: L.LatLngTuple = [30.0444, 31.2357];
+/** Where the map opens before a pin exists: the build's fixed location when one is set, else central Cairo. */
+const DEFAULT_CENTER: L.LatLngTuple = parseFixedLocation(process.env.EXPO_PUBLIC_FIXED_LOCATION) ?? [30.0444, 31.2357];
 /** About 10 cm: more is noise from a tap. */
 const round = (value: number) => Math.round(value * 1e6) / 1e6;
 
