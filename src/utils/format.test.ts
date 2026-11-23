@@ -5,7 +5,7 @@ import { firstName, formatMoney, formatRelativeTime } from './format';
 vi.mock('@/hooks/use-resource', () => ({ useResource: vi.fn() }));
 
 describe('formatMoney', () => {
-  it('renders dollars when the build says so', () => {
+  it('labels the amount with the currency the backend sends, without converting it', () => {
     expect(formatMoney('12.5', 'en', 'USD')).toBe('$12.50');
     expect(formatMoney('1234.5', 'en', 'USD')).toBe('$1,234.50');
     expect(formatMoney('19.98', 'ar', 'USD')).toBe('١٩٫٩٨\u00a0US$');

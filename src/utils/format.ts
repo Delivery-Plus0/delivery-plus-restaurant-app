@@ -7,21 +7,20 @@ const AMOUNT: Record<MoneyLocale, Intl.NumberFormat> = {
   ar: new Intl.NumberFormat('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
 };
 
-/** ISO 4217 code of the amounts, fixed at build time: EGP (the default) or USD. */
+/** Currencies the backend can price in. Every amount today is EGP (#152); the currency comes from the backend's response, never from the build. */
 export type Currency = 'EGP' | 'USD';
 
-export const CURRENCY: Currency = process.env.EXPO_PUBLIC_CURRENCY === 'USD' ? 'USD' : 'EGP';
-
 /**
- * Amounts in the build's currency and the current language unless given: "EGP 19.98" or "١٩٫٩٨ ج.م." for
- * Egyptian pounds (#152, #151), "$19.98" or "١٩٫٩٨ US$" for dollars (EXPO_PUBLIC_CURRENCY=USD).
+ * Money in the current language unless one is given (#151): "EGP 19.98", or "١٩٫٩٨ ج.م." in Arabic.
+ * Pass the response's `currency` where the backend sends one (the order quote); amounts without one are EGP.
+ * The symbol only labels the amount: nothing is converted.
  * Built by hand rather than with Intl's currency style, whose output differs between engines.
  * Backend decimals arrive as strings (TypeORM `decimal`) or numbers (cart); both render the same.
  */
 export function formatMoney(
   value: string | number | null | undefined,
   locale: MoneyLocale = getLocale(),
-  currency: Currency = CURRENCY,
+  currency: Currency = 'EGP',
 ): string {
   const amount = typeof value === 'number' ? value : Number.parseFloat(value ?? '');
   const digits = AMOUNT[locale].format(Number.isFinite(amount) ? amount : 0);

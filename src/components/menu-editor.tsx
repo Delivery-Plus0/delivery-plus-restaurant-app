@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { CURRENCY } from '@/utils/format';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -114,7 +113,7 @@ export function ItemSheet({ restaurantId, categories, item, categoryId, onClose,
       />
       <FormTextInput
         testID="item-editor-price"
-        label={t('Price ({currency})', { currency: CURRENCY })}
+        label={t('Price (EGP)')}
         value={draft.price}
         onChangeText={(price) => set({ price })}
         keyboardType="decimal-pad"
