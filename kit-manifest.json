@@ -45,7 +45,7 @@
     "src/types/expo.d.ts": "5dfa075c0fd6d922a645fe5463c48feefc74808ebf4bffce9a2f31c9c2ae8b38",
     "src/utils/email-verification.test.ts": "797c7ebfb5055429f50710676bcae3a6c0f8e64ca2c90aece851b9cdc769e54c",
     "src/utils/email-verification.ts": "d908e49f6b02c64eddee253cce9d6ec4bb0baba52963c8af835233b11cbe911f",
-    "src/utils/format.ts": "3280d4aef5ba44c3961660a7a78461b5a598eb01876a0b2e7836c1d3cf19b7f3",
+    "src/utils/format.ts": "90a3fac4e3c6ef3ba9864510fe78a36aa0bc021559a10babd5567596b9a450bf",
     "src/utils/image-upload.test.ts": "53c3184811193511f2ccced0f413a5318896105250d7769e49c96bcbf506b3d9",
     "src/utils/image-upload.ts": "d99fdb4ec8c17b58da7faa0935d3b07129477ca8fe2b9ec45d5dcd8f1ed9e6d8",
     "src/utils/login-errors.test.ts": "11d1086ef0016aa9a77f0d86c587ced8482881226cc470b1789723d36294b2c8",

@@ -7,14 +7,24 @@ const AMOUNT: Record<MoneyLocale, Intl.NumberFormat> = {
   ar: new Intl.NumberFormat('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
 };
 
+/** Currencies the backend can price in. Every amount today is EGP (#152); the currency comes from the backend's response, never from the build. */
+export type Currency = 'EGP' | 'USD';
+
 /**
- * Egyptian pounds (#152) in the current language unless one is given (#151): "EGP 19.98", or "١٩٫٩٨ ج.م." in Arabic (used once #151 adds the language).
+ * Money in the current language unless one is given (#151): "EGP 19.98", or "١٩٫٩٨ ج.م." in Arabic.
+ * Pass the response's `currency` where the backend sends one (the order quote); amounts without one are EGP.
+ * The symbol only labels the amount: nothing is converted.
  * Built by hand rather than with Intl's currency style, whose output differs between engines.
  * Backend decimals arrive as strings (TypeORM `decimal`) or numbers (cart); both render the same.
  */
-export function formatMoney(value: string | number | null | undefined, locale: MoneyLocale = getLocale()): string {
+export function formatMoney(
+  value: string | number | null | undefined,
+  locale: MoneyLocale = getLocale(),
+  currency: Currency = 'EGP',
+): string {
   const amount = typeof value === 'number' ? value : Number.parseFloat(value ?? '');
   const digits = AMOUNT[locale].format(Number.isFinite(amount) ? amount : 0);
+  if (currency === 'USD') return locale === 'ar' ? `${digits}\u00a0US$` : `$${digits}`;
   return locale === 'ar' ? `${digits}\u00a0ج.م.` : `EGP\u00a0${digits}`;
 }
 
